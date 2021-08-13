@@ -1,0 +1,56 @@
+{% extends "basic_ui/base.html" %}
+
+{% load static %}
+
+{% block stylesheets %}
+    <link rel="stylesheet" type="text/css" href="{% static 'basic_ui/tooltips.css' %}">
+{% endblock %}
+
+{% block title %}Campaign Overview{% endblock %}
+
+{% block content %}
+    <h3>Tools under Investigation:</h3>
+        <ul>
+            {% for tool in tool_list %}
+                <li>{{tool.full_name}}</li>
+            {% endfor %}
+        </ul>
+
+    <h3>Termination Condition:</h3>
+        <ul>
+            {% for condition, value in termination_condition %}
+                <li><b>{{condition}}:</b> {{value}}</li>
+            {% endfor %}
+        </ul>
+
+    <h3>Abstraction Config:</h3>
+        <!-- [[abstraction_config]] -->
+        <div class="tooltip"> foo <span class="tooltiptext"> bar </span></div>
+
+
+    <h3>Result Summary:</h3>
+    <table>
+      <tr>
+        <td>Discovery batches</td>
+        <td>[[num_discovery_batches]]</td>
+      </tr>
+      <tr>
+        <td>Total blocks sampled for discovery</td>
+        <td>[[num_total_sampled]]</td>
+      </tr>
+      <tr>
+        <td>Discoveries made</td>
+        <td>[[num_discoveries]]</td>
+      </tr>
+      <tr>
+        <td>Time spent</td>
+        <td>{{ time_spent }}</td>
+      </tr>
+    </table>
+
+    <h3>Detailed Results:</h3>
+        <ul>
+            <li><a href="{% url 'basic_ui:discoveries' campaign.id %}">All Discoveries</a></li>
+        </ul>
+
+{% endblock %}

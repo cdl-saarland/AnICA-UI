@@ -1,0 +1,9 @@
+{% extends "basic_ui/base.html" %}
+
+{% load django_tables2 %}
+
+{% block title %}Discoveries{% endblock %}
+
+{% block content %}
+    {% render_table table %}
+{% endblock %}
