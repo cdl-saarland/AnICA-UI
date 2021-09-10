@@ -92,7 +92,7 @@ def import_campaign(campaign_dir):
     for batch_entry in report['per_batch_stats']:
         batch_obj = campaign.discoverybatch_set.create()
         for sample_entry in batch_entry['per_interesting_sample_stats']:
-            for gen_entry in sample_entry['per_generalization_stats']:
+            for gen_entry in sample_entry.get('per_generalization_stats', []):
                 gen_id = gen_entry['id']
                 absblock = {'foo': 'bar'}
                 batch_obj.discovery_set.create(
