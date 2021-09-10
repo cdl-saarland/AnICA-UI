@@ -24,26 +24,21 @@
         </ul>
 
     <h3>Abstraction Config:</h3>
-        <!-- [[abstraction_config]] -->
-        <div class="tooltip"> foo <span class="tooltiptext"> bar </span></div>
+        {{ abstraction_config | safe }}
 
 
     <h3>Result Summary:</h3>
     <table>
       <tr>
-        <td>Discovery batches</td>
-        <td>[[num_discovery_batches]]</td>
+        <td>batches run:</td>
+        <td>{{ num_discovery_batches }}</td>
       </tr>
       <tr>
-        <td>Total blocks sampled for discovery</td>
-        <td>[[num_total_sampled]]</td>
+        <td>discoveries made:</td>
+        <td>{{ num_discoveries }}</td>
       </tr>
       <tr>
-        <td>Discoveries made</td>
-        <td>[[num_discoveries]]</td>
-      </tr>
-      <tr>
-        <td>Time spent</td>
+        <td>time spent:</td>
         <td>{{ time_spent }}</td>
       </tr>
     </table>
