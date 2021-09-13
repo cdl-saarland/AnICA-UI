@@ -41,3 +41,19 @@ body {
   font-family: monospace;
   white-space: pre-line;
 }
+
+
+td.campaigntable, th.campaigntable {
+    text-align: center;
+    padding: 8px 10px;
+}
+
+th.campaigntable {
+    background-color: #ccc;
+}
+
+/* tr.campaigntable.odd { */
+/*     background-color: #ccc; */
+/* } */
+
+

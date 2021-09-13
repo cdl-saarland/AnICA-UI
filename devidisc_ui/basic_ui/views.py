@@ -30,14 +30,28 @@ def prettify_seconds(secs):
 
     return ", ".join((f"{val} {kind}" for kind, val in time_entries))
 
+campaign_table_attrs = {"class": "campaigntable"}
+
 class CampaignTable(tables.Table):
-    campaign_id = tables.Column(linkify=(lambda value: django.urls.reverse('basic_ui:campaign', kwargs={'campaign_id': value})))
-    date = tables.Column()
-    host_pc = tables.Column()
-    tools = tables.Column()
-    num_batches = tables.Column()
-    num_discoveries = tables.Column()
-    seconds_spent = tables.Column()
+    campaign_id = tables.Column(
+            linkify=(lambda value: django.urls.reverse('basic_ui:campaign', kwargs={'campaign_id': value})),
+            attrs={"td": campaign_table_attrs, "th": campaign_table_attrs},
+            verbose_name="Campaign ID")
+    date = tables.Column(attrs={"td": campaign_table_attrs, "th": campaign_table_attrs},
+            verbose_name="Start Date")
+    host_pc = tables.Column(attrs={"td": campaign_table_attrs, "th": campaign_table_attrs},
+            verbose_name="Host PC")
+    tools = tables.Column(attrs={"td": campaign_table_attrs, "th": campaign_table_attrs},
+            verbose_name="Tools under Investigation")
+    num_batches = tables.Column(attrs={"td": campaign_table_attrs, "th": campaign_table_attrs},
+            verbose_name="# Batches")
+    num_discoveries = tables.Column(attrs={"td": campaign_table_attrs, "th": campaign_table_attrs},
+            verbose_name="# Discoveries")
+    time_spent = tables.Column(attrs={"td": campaign_table_attrs, "th": campaign_table_attrs},
+            verbose_name="Run-Time")
+
+    class Meta:
+        row_attrs = campaign_table_attrs
 
 def index(request):
     campaigns = Campaign.objects.all()
@@ -54,7 +68,7 @@ def index(request):
             'host_pc': campaign.host_pc,
             'num_batches': len(batches),
             'num_discoveries': num_discoveries,
-            'seconds_spent': prettify_seconds(campaign.total_seconds),
+            'time_spent': prettify_seconds(campaign.total_seconds),
             })
 
     table = CampaignTable(data)
