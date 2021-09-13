@@ -5,6 +5,7 @@
 .tooltip {
   position: relative;
   display: inline-block;
+  vertical-align: text-top;
 }
 
 /* Tooltip text */

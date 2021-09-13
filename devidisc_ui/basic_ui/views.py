@@ -96,7 +96,16 @@ def format_abstraction_config(abstraction_config):
                 continue
             doc = v.get(f'{ki}.doc', None)
             res += "      <li class='absconfig_li_inner'>"
-            entry_str = f"{ki}: {json.dumps(vi)}"
+            if ki == 'features':
+                entry_str = f"{ki}:\n"
+                entry_str += "<ul class='absconfig_ul_inner'>\n"
+                for vs in vi:
+                    entry_str += "<li class='absconfig_li_inner'>"
+                    entry_str += f"{vs[0]}: {json.dumps(vs[1])}"
+                    entry_str += "</li>\n"
+                entry_str += "</ul>\n"
+            else:
+                entry_str = f"{ki}: {json.dumps(vi)}"
 
             if doc is not None:
                 entry_str = "<div class='tooltip'>" + entry_str + "<span class='tooltiptext'>" + doc + "</span></div>"
@@ -140,14 +149,27 @@ def campaign(request, campaign_id):
 
     return render(request, 'basic_ui/campaign_overview.html', context)
 
+discovery_table_attrs = {"class": "discoverytable"}
 
 class DiscoveryTable(tables.Table):
-    gen_id = tables.Column()
-    absblock = tables.Column()
-    num_insns = tables.Column()
-    coverage = tables.Column()
-    mean_interestingness = tables.Column()
-    witness_len = tables.Column()
+    identifier = tables.Column(
+            attrs={"td": discovery_table_attrs, "th": discovery_table_attrs},
+            verbose_name="Discovery ID")
+    absblock = tables.Column(
+            attrs={"td": discovery_table_attrs, "th": discovery_table_attrs},
+            verbose_name="Abstract Block")
+    num_insns = tables.Column(
+            attrs={"td": discovery_table_attrs, "th": discovery_table_attrs},
+            verbose_name="# Instructions")
+    coverage = tables.Column(
+            attrs={"td": discovery_table_attrs, "th": discovery_table_attrs},
+            verbose_name="Sample Coverage")
+    interestingness = tables.Column(
+            attrs={"td": discovery_table_attrs, "th": discovery_table_attrs},
+            verbose_name="Mean Interestingness")
+    witness_len = tables.Column(
+            attrs={"td": discovery_table_attrs, "th": discovery_table_attrs},
+            verbose_name="Witness Length")
 
 def discoveries(request, campaign_id):
     table = DiscoveryTable(Discovery.objects.filter(batch__campaign_id=campaign_id))
