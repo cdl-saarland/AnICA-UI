@@ -14,20 +14,18 @@ def prettify_seconds(secs):
     remaining_time = secs
     time_entries = []
     for kind, factor in (('seconds', 60), ('minutes', 60), ('hours', 24), ('days', None)):
-        if factor is  None:
+        if factor is None:
             curr_val = remaining_time
             remaining_time = 0
         else:
             curr_val = remaining_time % factor
-            remaining_time = remaining_time // 60
+            remaining_time = remaining_time // factor
         time_entries.append((kind, curr_val))
         if remaining_time <= 0:
             break
-
     if len(time_entries) > 2:
         time_entries = time_entries[-2:]
     time_entries.reverse()
-
     return ", ".join((f"{val} {kind}" for kind, val in time_entries))
 
 campaign_table_attrs = {"class": "campaigntable"}
