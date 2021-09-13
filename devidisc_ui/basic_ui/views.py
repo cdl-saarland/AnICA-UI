@@ -71,6 +71,8 @@ def index(request):
 
     table = CampaignTable(data)
 
+    tables.RequestConfig(request).configure(table)
+
     return render(request, "basic_ui/data_table.html", {
         "title": "All Campaigns",
         "table": table
@@ -149,6 +151,8 @@ class DiscoveryTable(tables.Table):
 
 def discoveries(request, campaign_id):
     table = DiscoveryTable(Discovery.objects.filter(batch__campaign_id=campaign_id))
+
+    tables.RequestConfig(request).configure(table)
 
     return render(request, "basic_ui/data_table.html", {
         "title": "Discoveries",
