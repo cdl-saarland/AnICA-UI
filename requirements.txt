@@ -1,3 +1,5 @@
 
 Django
 django_tables2
+
+-e lib/devidisc
