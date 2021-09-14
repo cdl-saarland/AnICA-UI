@@ -52,24 +52,19 @@ from pathlib import Path
 
 from django.utils.dateparse import parse_datetime
 
-# from devidisc.configurable import load_json_config
-import json
+from devidisc.configurable import load_json_config
 
 
 def import_campaign(campaign_dir):
     base_dir = Path(campaign_dir)
 
-    with open(base_dir / "campaign_config.json") as f:
-        campaign_config = json.load(f)
-    # campaign_config = load_json_config(base_dir / "campaign_config.json")
+    campaign_config = load_json_config(base_dir / "campaign_config.json")
 
     abstraction_config = campaign_config["abstraction_config"]
     tools = campaign_config['predictors']
     termination_condition = campaign_config['termination']
 
-    with open(base_dir / "report.json") as f:
-        report = json.load(f)
-    # report = load_json_config(base_dir / "report.json")
+    report = load_json_config(base_dir / "report.json")
     date = parse_datetime(report['start_date'])
     total_seconds = report['seconds_passed']
     host_pc = report['host_pc']
@@ -94,7 +89,12 @@ def import_campaign(campaign_dir):
         for sample_entry in batch_entry['per_interesting_sample_stats']:
             for gen_entry in sample_entry.get('per_generalization_stats', []):
                 gen_id = gen_entry['id']
-                absblock = {'foo': 'bar'}
+                ab_path = base_dir / 'discoveries' / f'{gen_id}.json'
+                if not ab_path.exists():
+                    continue
+                absblock = load_json_config(ab_path)
+                num_insns = len(absblock['ab']['abs_insns'])
+                # TODO use in Discovery
                 batch_obj.discovery_set.create(
                         identifier = gen_id,
                         absblock = absblock,

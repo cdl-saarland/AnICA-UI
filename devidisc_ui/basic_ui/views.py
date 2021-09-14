@@ -2,13 +2,30 @@ from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse
 import django
 
+from django.db.models import F
+
 import json
 
+from devidisc.abstractblock import AbstractBlock
+from devidisc.abstractioncontext import AbstractionContext
 # Create your views here.
 
 from .models import Campaign, Discovery
 
 import django_tables2 as tables
+
+def load_abstract_block(json_dict, actx):
+    if actx is None:
+        config_dict = json_dict['config']
+        config_dict['predmanager'] = None # we don't need that one here
+        actx = AbstractionContext(config=config_dict)
+
+    # result_ref = json_dict['result_ref']
+
+    ab_dict = actx.json_ref_manager.resolve_json_references(json_dict['ab'])
+
+    ab = AbstractBlock.from_json_dict(actx, ab_dict)
+    return ab#, result_ref
 
 def prettify_seconds(secs):
     remaining_time = secs
@@ -160,7 +177,7 @@ class DiscoveryTable(tables.Table):
             verbose_name="Abstract Block")
     num_insns = tables.Column(
             attrs={"td": discovery_table_attrs, "th": discovery_table_attrs},
-            verbose_name="# Instructions")
+            verbose_name="# Instructions", empty_values=())
     coverage = tables.Column(
             attrs={"td": discovery_table_attrs, "th": discovery_table_attrs},
             verbose_name="Sample Coverage")
@@ -170,6 +187,24 @@ class DiscoveryTable(tables.Table):
     witness_len = tables.Column(
             attrs={"td": discovery_table_attrs, "th": discovery_table_attrs},
             verbose_name="Witness Length")
+
+    def render_absblock(self, value):
+        # TODO storing the AbstractionContext here is somewhat ugly, but it is
+        # a lot faster than recreating it every time.
+        actx = getattr(self, '_actx', None)
+        res = load_abstract_block(value, actx)
+        if actx is None:
+            self._actx = res.actx
+        return str(res)
+
+    def render_num_insns(self, value, record):
+        return len(record.absblock['ab']['abs_insns'])
+
+    def order_num_insns(self, queryset, is_descending):
+        queryset = queryset.annotate(
+            num_insns=len(F('absblock')['ab']['abs_insns'])
+        ).order_by(("-" if is_descending else "") + "num_insns")
+        return (queryset, True)
 
 def discoveries(request, campaign_id):
     table = DiscoveryTable(Discovery.objects.filter(batch__campaign_id=campaign_id))
