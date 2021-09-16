@@ -111,3 +111,23 @@ ul.absfeaturelist {
     margin-bottom: 2px;
 }
 
+table.absinsn {
+    width: 100%;
+}
+
+div.explicit_schemes {
+    padding: 20px;
+    background-color: white;
+    resize: vertical;
+    width: auto;
+    height: 300px;
+    overflow: scroll;
+}
+
+tr.absinsn.explicit_schemes {
+    visibility: collapse;
+}
+
+button {
+    margin: 4px;
+}

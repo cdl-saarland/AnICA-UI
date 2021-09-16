@@ -3,6 +3,8 @@ from django.http import HttpResponse
 import django
 
 from django.utils.safestring import mark_safe
+from django.utils.html import escape
+
 from django.db.models import F
 
 import json
@@ -49,7 +51,7 @@ def prettify_absinsn(absinsn, hl_feature=None, skip_top=False):
     return res
 
 
-def prettify_absblock(absblock, hl_expansion=None, skip_top=False):
+def prettify_absblock(absblock, hl_expansion=None, skip_top=False, add_schemes=False):
     res = ""
     res += "<b>Abstract Instructions:</b>\n"
     res += "<table class=\"absinsn\">\n"
@@ -61,8 +63,33 @@ def prettify_absblock(absblock, hl_expansion=None, skip_top=False):
             hl_feature = hl_expansion[2]
 
         insn_str = prettify_absinsn(ai, hl_feature, skip_top=skip_top)
-        res += f"<td class=\"absinsn\">{insn_str}</td>\n"
-        res += "</tr>"
+        res += f"<td class=\"absinsn\">{insn_str}</td>"
+
+        feasible_schemes = absblock.actx.insn_feature_manager.compute_feasible_schemes(ai.features)
+        if not add_schemes:
+            num_schemes = len(feasible_schemes)
+            res += f"<td class=\"absinsn\">({num_schemes})</td>"
+
+        res += "\n</tr>\n"
+
+        if add_schemes:
+            content_id = "expl_schemes_{}".format(idx) # TODO add a unique identifier before the idx
+            res += "<tr class=\"absinsn\"><td class=\"absinsn\"></td><td class=\"absinsn\">"
+            res += "<div class=\"absinsn indent_content\">"
+            res += "Feasible Schemes: {} <button onclick=\"(function(){{let el = document.getElementById('{content_id}'); if (el.style.visibility === 'visible') {{el.style.visibility = 'collapse'; }} else {{el.style.visibility = 'visible';}} }})()\">show</button>\n".format(len(feasible_schemes), content_id=content_id)
+            res += "</div>"
+            res += "</td></tr>\n"
+
+            res += "<tr class=\"absinsn explicit_schemes\" id=\"{}\"><td class=\"absinsn\"></td><td class=\"absinsn\">".format(content_id)
+            res += "<div class=\"explicit_schemes code indent_content\">"
+
+            strs = list(map(str, feasible_schemes))
+            strs.sort()
+            for s in strs:
+                res += escape(s)
+                res += '\n'
+            res += "</div>"
+            res += "</td></tr>\n"
 
     res += "</table>\n"
 
@@ -308,7 +335,7 @@ def discovery(request, campaign_id, discovery_id):
 
     absblock = load_abstract_block(discovery_obj.absblock, None)
 
-    absblock_html = prettify_absblock(absblock)
+    absblock_html = prettify_absblock(absblock, add_schemes=True)
 
     context = {
             'absblock': absblock_html,
