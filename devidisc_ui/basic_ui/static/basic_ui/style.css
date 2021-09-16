@@ -97,3 +97,17 @@ ul.pagination > li > a {
     text-decoration: none;
 }
 
+
+div.absblock {
+    text-align: left;
+}
+
+div.indent_content {
+    margin-left: 20px;
+}
+
+ul.absfeaturelist {
+    margin-top: 2px;
+    margin-bottom: 2px;
+}
+
