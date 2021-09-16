@@ -197,9 +197,14 @@ def all_campaigns(request):
 
     tables.RequestConfig(request).configure(table)
 
+    topbarpathlist = [
+            ('all campaigns', django.urls.reverse('basic_ui:all_campaigns')),
+        ]
+
     return render(request, "basic_ui/data_table.html", {
         "title": "All Campaigns",
-        "table": table
+        "table": table,
+        'topbarpathlist': topbarpathlist,
     })
 
 
@@ -261,6 +266,11 @@ def campaign(request, campaign_id):
 
     cfg_str = format_abstraction_config(campaign_obj.config_dict)
 
+    topbarpathlist = [
+            ('all campaigns', django.urls.reverse('basic_ui:all_campaigns')),
+            (f'campaign {campaign_id}', django.urls.reverse('basic_ui:campaign', kwargs={'campaign_id': campaign_id})),
+        ]
+
     context = {
             'campaign': campaign_obj,
             'tool_list': tool_list,
@@ -269,6 +279,7 @@ def campaign(request, campaign_id):
             'num_discovery_batches': len(batches),
             'num_discoveries': num_discoveries,
             'time_spent': time_spent,
+            'topbarpathlist': topbarpathlist,
         }
 
     return render(request, 'basic_ui/campaign_overview.html', context)
@@ -324,9 +335,16 @@ def all_discoveries(request, campaign_id):
 
     tables.RequestConfig(request).configure(table)
 
+    topbarpathlist = [
+            ('all campaigns', django.urls.reverse('basic_ui:all_campaigns')),
+            (f'campaign {campaign_id}', django.urls.reverse('basic_ui:campaign', kwargs={'campaign_id': campaign_id})),
+            ('all discoveries', django.urls.reverse('basic_ui:all_discoveries', kwargs={'campaign_id': campaign_id})),
+        ]
+
     return render(request, "basic_ui/data_table.html", {
         "title": "Discoveries",
-        "table": table
+        "table": table,
+        'topbarpathlist': topbarpathlist,
     })
 
 
@@ -337,7 +355,15 @@ def discovery(request, campaign_id, discovery_id):
 
     absblock_html = prettify_absblock(absblock, add_schemes=True)
 
+    topbarpathlist = [
+            ('all campaigns', django.urls.reverse('basic_ui:all_campaigns')),
+            (f'campaign {campaign_id}', django.urls.reverse('basic_ui:campaign', kwargs={'campaign_id': campaign_id})),
+            ('all discoveries', django.urls.reverse('basic_ui:all_discoveries', kwargs={'campaign_id': campaign_id})),
+            (f'discovery {discovery_id}', django.urls.reverse('basic_ui:discovery', kwargs={'campaign_id': campaign_id, 'discovery_id': discovery_id}))
+        ]
+
     context = {
             'absblock': absblock_html,
+            'topbarpathlist': topbarpathlist,
         }
     return render(request, 'basic_ui/discovery_overview.html', context)

@@ -12,6 +12,13 @@
     <div id='topbar'>
         <div id='topbartext'>
         DeviDisc Explorer
+            <span id='topbarpath'>
+            {# {% block topbarpath %}{% endblock %} #}
+            {% for entry, link in topbarpathlist %}
+                /
+                <a href="{{link}}">{{entry}}</a>
+            {% endfor %}
+            </span>
         </div>
     </div>
     <div id="content">

@@ -25,6 +25,17 @@ body {
     color: #eee;
 }
 
+#topbarpath {
+    vertical-align:middle;
+    margin-left: 30px;
+    font-size: 20px;
+}
+
+#topbarpath > a {
+    color: #eee;
+    text-decoration: none;
+}
+
 #content {
     padding-top: 10px;
     padding-left: 20px;
