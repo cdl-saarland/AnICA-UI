@@ -37,6 +37,8 @@ class Discovery(models.Model):
     batch = models.ForeignKey(DiscoveryBatch, on_delete=models.CASCADE)
     identifier = models.CharField(max_length=63)
     absblock = models.JSONField()
+    num_insns = models.IntegerField()
+    witness_len = models.IntegerField()
     interestingness = models.FloatField()
     occuring_insnschemes = models.ManyToManyField(InsnScheme)
 
@@ -95,10 +97,12 @@ def import_campaign(campaign_dir):
                 absblock = load_json_config(ab_path)
                 clear_doc_entries(absblock)
                 num_insns = len(absblock['ab']['abs_insns'])
-                # TODO use in Discovery
+                witness_len = gen_entry['witness_len']
                 batch_obj.discovery_set.create(
                         identifier = gen_id,
                         absblock = absblock,
+                        num_insns = num_insns,
+                        witness_len = witness_len,
                         interestingness = 42.0,
                     )
 
