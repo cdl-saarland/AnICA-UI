@@ -65,6 +65,10 @@ th.discoverytable {
     background-color: #ccc;
 }
 
+table.discoverytable, th.discoverytable, td.discoverytable {
+    border-collapse: collapse;
+    border: 1px solid #999;
+}
 
 ul.pagination > li {
     display: inline;
