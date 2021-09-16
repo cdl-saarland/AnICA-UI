@@ -170,8 +170,10 @@ discovery_table_attrs = {"class": "discoverytable"}
 
 class DiscoveryTable(tables.Table):
     identifier = tables.Column(
+            linkify=(lambda value, record: django.urls.reverse('basic_ui:discovery', kwargs={'campaign_id': record.batch.campaign.id, 'discovery_id': value})),
             attrs={"td": discovery_table_attrs, "th": discovery_table_attrs},
-            verbose_name="Discovery ID")
+            verbose_name="Discovery ID",
+            )
     absblock = tables.Column(
             attrs={"td": discovery_table_attrs, "th": discovery_table_attrs},
             verbose_name="Abstract Block")
@@ -222,30 +224,9 @@ def all_discoveries(request, campaign_id):
 
 
 def discovery(request, campaign_id, discovery_id):
-    pass
-    # campaign_obj = get_object_or_404(Campaign, pk=campaign_id)
-    #
-    # tool_list = campaign_obj.tools.all()
-    #
-    # termination_condition = list(campaign_obj.termination_condition.items())
-    #
-    # total_seconds = campaign_obj.total_seconds
-    #
-    # time_spent = prettify_seconds(total_seconds)
-    #
-    # batches = campaign_obj.discoverybatch_set.all()
-    # num_discoveries = sum([b.discovery_set.count() for b in batches])
-    #
-    # cfg_str = format_abstraction_config(campaign_obj.config_dict)
-    #
-    # context = {
-    #         'campaign': campaign_obj,
-    #         'tool_list': tool_list,
-    #         'termination_condition': termination_condition,
-    #         'abstraction_config': cfg_str,
-    #         'num_discovery_batches': len(batches),
-    #         'num_discoveries': num_discoveries,
-    #         'time_spent': time_spent,
-    #     }
-    #
-    # return render(request, 'basic_ui/campaign_overview.html', context)
+    discovery_obj = get_object_or_404(Discovery, batch__campaign_id=campaign_id, identifier=discovery_id)
+
+    context = {
+            'absblock': discovery_obj.absblock,
+        }
+    return render(request, 'basic_ui/discovery_overview.html', context)

@@ -1,0 +1,27 @@
+{% extends "basic_ui/base.html" %}
+
+{% load static %}
+
+{% block stylesheets %}
+    <link rel="stylesheet" type="text/css" href="{% static 'basic_ui/tooltips.css' %}">
+{% endblock %}
+
+{% block title %}Discovery Overview{% endblock %}
+
+{% block content %}
+
+    TODO: link to parent campaign
+
+    <h3>Discovery:</h3>
+    {{ absblock | safe }}
+
+
+    <h3>Metrics:</h3>
+    TODO
+
+
+    <h3>Witness:</h3>
+    TODO
+
+
+{% endblock %}

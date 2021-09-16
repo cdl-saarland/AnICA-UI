@@ -93,6 +93,7 @@ def import_campaign(campaign_dir):
                 if not ab_path.exists():
                     continue
                 absblock = load_json_config(ab_path)
+                clear_doc_entries(absblock)
                 num_insns = len(absblock['ab']['abs_insns'])
                 # TODO use in Discovery
                 batch_obj.discovery_set.create(
@@ -100,4 +101,15 @@ def import_campaign(campaign_dir):
                         absblock = absblock,
                         interestingness = 42.0,
                     )
+
+def clear_doc_entries(json_dict):
+    if isinstance(json_dict, dict):
+        for k in list(json_dict.keys()):
+            if k.endswith('.doc'):
+                del json_dict[k]
+            else:
+                clear_doc_entries(json_dict[k])
+    elif isinstance(json_dict, list) or isinstance(json_dict, tuple):
+        for i in json_dict:
+            clear_doc_entries(i)
 
