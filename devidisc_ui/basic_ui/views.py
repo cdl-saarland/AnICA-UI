@@ -198,7 +198,7 @@ def prettify_config_diff(config_diff):
         compacted[ks].append(v)
 
     for ks, vs in compacted.items():
-        lines.append(".".join(ks) + ": " + ",".join(map(escape, vs)))
+        lines.append("<span class='line'>" + ".".join(ks) + "</span>: <span class='line'>" + ",".join(map(escape, vs)) + "</span>")
 
     if len(lines) == 0:
         return None

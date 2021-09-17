@@ -155,3 +155,9 @@ button {
 .config-diff {
     text-align: left;
 }
+
+
+/* this is used to specify preferred line break locations  */
+span.line {
+  display: inline-block;
+}
