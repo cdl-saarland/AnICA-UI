@@ -7,10 +7,12 @@ from django.utils.html import escape
 
 from django.db.models import F
 
+from collections import defaultdict
 import json
 
 from devidisc.abstractblock import AbstractBlock
 from devidisc.abstractioncontext import AbstractionContext
+from devidisc.configurable import config_diff
 # Create your views here.
 
 from .models import Campaign, Discovery
@@ -186,6 +188,25 @@ def prettify_seconds(secs):
     time_entries.reverse()
     return ", ".join((f"{val} {kind}" for kind, val in time_entries))
 
+def prettify_config_diff(config_diff):
+    css_class = "config-diff"
+    lines = []
+    compacted = defaultdict(list)
+    for ks, v in config_diff:
+        if any(map(lambda x: x.endswith("_path"), ks)):
+            continue
+        compacted[ks].append(v)
+
+    for ks, vs in compacted.items():
+        lines.append(".".join(ks) + ": " + ",".join(map(escape, vs)))
+
+    if len(lines) == 0:
+        return None
+
+    res = f"<div class=\"{css_class}\">\n" + "<br>\n".join(lines) + "</div>\n"
+
+    return mark_safe(res)
+
 campaign_table_attrs = {"class": "campaigntable"}
 
 class CampaignTable(tables.Table):
@@ -196,15 +217,17 @@ class CampaignTable(tables.Table):
     date = tables.Column(attrs={"td": campaign_table_attrs, "th": campaign_table_attrs},
             verbose_name="Start Date")
     host_pc = tables.Column(attrs={"td": campaign_table_attrs, "th": campaign_table_attrs},
-            verbose_name="Host PC")
+            verbose_name="Host PC", visible=False)
     tools = tables.Column(attrs={"td": campaign_table_attrs, "th": campaign_table_attrs},
             verbose_name="Tools under Investigation")
+    config_delta = tables.Column(attrs={"td": campaign_table_attrs, "th": campaign_table_attrs},
+            verbose_name="Config Delta")
     num_batches = tables.Column(attrs={"td": campaign_table_attrs, "th": campaign_table_attrs},
             verbose_name="# Batches")
     num_discoveries = tables.Column(attrs={"td": campaign_table_attrs, "th": campaign_table_attrs},
             verbose_name="# Discoveries")
     init_interesting_sample_ratio = tables.Column(attrs={"td": campaign_table_attrs, "th": campaign_table_attrs},
-            verbose_name="Initial Interesting Sample Ratio")
+            verbose_name="IISR")
     time_spent = tables.Column(attrs={"td": campaign_table_attrs, "th": campaign_table_attrs},
             verbose_name="Run-Time")
 
@@ -215,8 +238,28 @@ class CampaignTable(tables.Table):
 def all_campaigns(request):
     campaigns = Campaign.objects.all()
 
-    data = []
+    if len(campaigns) == 0:
+        # TODO custom page
+        pass
+
+    assert len(campaigns) > 0
+
+    base_config = AbstractionContext.get_default_config()
+    config_deltas = []
     for campaign in campaigns:
+        config_deltas.append(config_diff(base_config, campaign.config_dict))
+
+    common_diffs = []
+    for diff in config_deltas[0]:
+        if all(map(lambda x: diff in x, config_deltas)):
+            common_diffs.append(diff)
+
+    for d in common_diffs:
+        for delta in config_deltas:
+            delta.remove(d)
+
+    data = []
+    for campaign, delta in zip(campaigns, config_deltas):
         batches = campaign.discoverybatch_set.all()
         num_discoveries = sum([b.discovery_set.count() for b in batches])
         tool_list = campaign.tools.all()
@@ -226,9 +269,12 @@ def all_campaigns(request):
             if init_batch.num_sampled > 0:
                 init_interesting_sample_ratio = init_batch.num_interesting / init_batch.num_sampled
 
+        config_delta_html = prettify_config_diff(delta)
+
         data.append({
             'campaign_id': campaign.id,
             'tools': ", ".join(map(str, tool_list)),
+            'config_delta': config_delta_html,
             'date': campaign.date,
             'host_pc': campaign.host_pc,
             'num_batches': len(batches),

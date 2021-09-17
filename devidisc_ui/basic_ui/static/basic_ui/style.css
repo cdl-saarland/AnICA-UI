@@ -151,3 +151,7 @@ button {
 .imagecontainer > img {
     max-width: 100%;
 }
+
+.config-diff {
+    text-align: left;
+}
