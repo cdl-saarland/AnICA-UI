@@ -5,6 +5,7 @@ campaign directories.
 
 import argparse
 import json
+import math
 import os
 from pathlib import Path
 import random
@@ -53,6 +54,8 @@ def main():
             print(f"Skipping campaign directory '{base_dir}' because a 'metrics.json' already exists. Run with '--overwrite' to overwrite.")
             continue
 
+        print(f"computing metrics for '{base_dir}'")
+
         discovery2metrics = dict()
 
         actx = None
@@ -76,7 +79,10 @@ def main():
                     eval_res[r['predictor']] = {'TP': r['result']}
                 ints.append(actx.interestingness_metric.compute_interestingness(eval_res))
 
-            mean_interestingness = geometric_mean(ints)
+            if len(ints) == 0 or any(map(lambda x: not math.isfinite(x), ints)) or any(map(lambda x: x <= 0, ints)):
+                mean_interestingness = 42
+            else:
+                mean_interestingness = geometric_mean(ints)
 
             # compute coverage
             coverage = ab_coverage(absblock, args.covnum)

@@ -16,8 +16,25 @@
 
 
     <h3>Metrics:</h3>
-    TODO
+    <table>
+      <tr>
+        <td>geomean interestingness:</td>
+        <td>{{ mean_interestingness }}</td>
+      </tr>
+      <tr>
+        <td>sample coverage:</td>
+        <td>{{ ab_coverage }}</td>
+      </tr>
+      <tr>
+        <td>witness length:</td>
+        <td>{{ witness_length }}</td>
+      </tr>
+    </table>
 
+    <h3>Graphs:</h3>
+    <div class="imagecontainer">
+        <img src='data:image/png;base64,{{ interestingness_histogram }}'>
+    </div>
 
     <h3>Witness:</h3>
     TODO

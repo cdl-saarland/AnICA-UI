@@ -1,6 +1,7 @@
 from django.db import models
 
 # Create your models here.
+import json
 
 class Tool(models.Model):
     full_name = models.CharField(max_length=255)
@@ -42,10 +43,15 @@ class Discovery(models.Model):
     num_insns = models.IntegerField()
     witness_len = models.IntegerField()
     interestingness = models.FloatField()
+    ab_coverage = models.FloatField()
     occuring_insnschemes = models.ManyToManyField(InsnScheme)
 
     def __str__(self):
         return self.identifier
+
+class Measurement(models.Model):
+    discovery = models.ForeignKey(Discovery, on_delete=models.CASCADE)
+    interestingness = models.FloatField()
 
 
 class Witness(models.Model):
@@ -88,6 +94,13 @@ def import_campaign(campaign_dir):
     for t in tool_objs:
         campaign.tools.add(t.id)
 
+    metrics_path = base_dir / 'metrics.json'
+    if metrics_path.exists():
+        with open(metrics_path, 'r') as f:
+            metrics_dict = json.load(f)
+    else:
+        metrics_dict = {}
+
     for batch_entry in report['per_batch_stats']:
         num_sampled = batch_entry['num_sampled']
         num_interesting = batch_entry['num_interesting']
@@ -102,13 +115,30 @@ def import_campaign(campaign_dir):
                 clear_doc_entries(absblock)
                 num_insns = len(absblock['ab']['abs_insns'])
                 witness_len = gen_entry['witness_len']
-                batch_obj.discovery_set.create(
+
+                ab_metrics = metrics_dict.get(gen_id, None)
+                if ab_metrics is not None:
+                    mean_interestingness = ab_metrics['mean_interestingness']
+                    ab_coverage = ab_metrics['ab_coverage']
+                else:
+                    mean_interestingness = None
+                    ab_coverage = None
+
+                discovery_obj = batch_obj.discovery_set.create(
                         identifier = gen_id,
                         absblock = absblock,
                         num_insns = num_insns,
                         witness_len = witness_len,
-                        interestingness = 42.0,
+                        interestingness = mean_interestingness,
+                        ab_coverage = ab_coverage,
                     )
+
+                if ab_metrics is not None:
+                    for interestingness in ab_metrics['interestingness_series']:
+                        discovery_obj.measurement_set.create(
+                                interestingness=interestingness,
+                            )
+
 
 def clear_doc_entries(json_dict):
     if isinstance(json_dict, dict):

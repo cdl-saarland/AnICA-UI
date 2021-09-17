@@ -9,6 +9,7 @@ from django.db.models import F
 
 from collections import defaultdict
 import json
+import math
 
 from devidisc.abstractblock import AbstractBlock
 from devidisc.abstractioncontext import AbstractionContext
@@ -46,6 +47,27 @@ def make_discoveries_per_batch_plot(batches):
     ax.set_title('Discoveries per Batch')
     ax.set_ylabel("# Discoveries")
     ax.set_xlabel("Batch Index")
+    ax.grid(linestyle="--", linewidth=0.5, color='.25', zorder=-10)
+
+    ax.yaxis.set_major_locator(MaxNLocator(integer=True))
+
+    return encode_plot(fig)
+
+def make_interestingness_histogramm_plot(measurements):
+    interestingnesses = [ m.interestingness for m in measurements ]
+
+    finite_entries = [i for i in interestingnesses if math.isfinite(i)]
+    max_finite = max(finite_entries)
+    inf_val = abs(max_finite) * 1.5
+
+    entries = [i if math.isfinite(i) else inf_val for i in interestingnesses]
+
+    fig, ax = plt.subplots(figsize=(10,4))
+    ax.hist(entries)
+
+    ax.set_title('Interestingness of Samples')
+    ax.set_ylabel("# Occurrences")
+    ax.set_xlabel("Interestingness")
     ax.grid(linestyle="--", linewidth=0.5, color='.25', zorder=-10)
 
     ax.yaxis.set_major_locator(MaxNLocator(integer=True))
@@ -391,7 +413,7 @@ class DiscoveryTable(tables.Table):
     num_insns = tables.Column(
             attrs={"td": discovery_table_attrs, "th": discovery_table_attrs},
             verbose_name="# Instructions", empty_values=())
-    coverage = tables.Column(
+    ab_coverage = tables.Column(
             attrs={"td": discovery_table_attrs, "th": discovery_table_attrs},
             verbose_name="Sample Coverage")
     interestingness = tables.Column(
@@ -448,6 +470,12 @@ def discovery(request, campaign_id, discovery_id):
 
     absblock_html = prettify_absblock(absblock, add_schemes=True)
 
+    mean_interestingness = discovery_obj.interestingness
+    ab_coverage = discovery_obj.ab_coverage
+    witness_length = discovery_obj.witness_len
+
+    plot = make_interestingness_histogramm_plot(list(discovery_obj.measurement_set.all()))
+
     topbarpathlist = [
             ('all campaigns', django.urls.reverse('basic_ui:all_campaigns')),
             (f'campaign {campaign_id}', django.urls.reverse('basic_ui:campaign', kwargs={'campaign_id': campaign_id})),
@@ -458,5 +486,9 @@ def discovery(request, campaign_id, discovery_id):
     context = {
             'absblock': absblock_html,
             'topbarpathlist': topbarpathlist,
+            'mean_interestingness': mean_interestingness,
+            'ab_coverage': ab_coverage,
+            'witness_length': witness_length,
+            'interestingness_histogram': plot,
         }
     return render(request, 'basic_ui/discovery_overview.html', context)
