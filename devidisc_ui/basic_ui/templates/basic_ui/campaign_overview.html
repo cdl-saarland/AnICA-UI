@@ -43,6 +43,11 @@
       </tr>
     </table>
 
+    <h3>Graphs:</h3>
+    <div class="imagecontainer">
+        <img src='data:image/png;base64,{{ discoveries_per_batch_plot }}'>
+    </div>
+
     <h3>Detailed Results:</h3>
         <ul>
             <li><a href="{% url 'basic_ui:all_discoveries' campaign.id %}">All Discoveries</a></li>

@@ -2,4 +2,6 @@
 Django
 django_tables2
 
+matplotlib
+
 -e lib/devidisc

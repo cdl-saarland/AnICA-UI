@@ -5,6 +5,7 @@ body {
 }
 
 #topbar {
+    z-index: 1000;
     overflow: hidden;
     background-color: #333;
     position: fixed;
@@ -141,4 +142,12 @@ tr.absinsn.explicit_schemes {
 
 button {
     margin: 4px;
+}
+
+.imagecontainer {
+    text-align: center;
+}
+
+.imagecontainer > img {
+    max-width: 100%;
 }

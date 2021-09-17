@@ -17,6 +17,40 @@ from .models import Campaign, Discovery
 
 import django_tables2 as tables
 
+import matplotlib
+matplotlib.use('Agg')
+
+import matplotlib.pyplot as plt
+from matplotlib.ticker import MaxNLocator
+import io, base64
+
+def encode_plot(fig):
+    flike = io.BytesIO()
+    fig.savefig(flike)
+    b64 = base64.b64encode(flike.getvalue()).decode()
+    return b64
+
+def make_discoveries_per_batch_plot(batches):
+    ordered = batches.order_by('pk')
+
+    objs = ordered.all()
+
+    batch_idx = list(range(0, len(objs)))
+    counts = [x.discovery_set.count() for x in objs]
+
+    fig, ax = plt.subplots(figsize=(10,4))
+    ax.plot(batch_idx, counts, '--bo')
+
+    ax.set_title('Discoveries per Batch')
+    ax.set_ylabel("# Discoveries")
+    ax.set_xlabel("Batch Index")
+    ax.grid(linestyle="--", linewidth=0.5, color='.25', zorder=-10)
+
+    ax.yaxis.set_major_locator(MaxNLocator(integer=True))
+
+    return encode_plot(fig)
+
+
 def load_abstract_block(json_dict, actx):
     if actx is None:
         config_dict = json_dict['config']
@@ -281,6 +315,8 @@ def campaign(request, campaign_id):
             (f'campaign {campaign_id}', django.urls.reverse('basic_ui:campaign', kwargs={'campaign_id': campaign_id})),
         ]
 
+    discoveries_per_batch_plot = make_discoveries_per_batch_plot(batches)
+
     context = {
             'campaign': campaign_obj,
             'tool_list': tool_list,
@@ -289,6 +325,7 @@ def campaign(request, campaign_id):
             'num_discovery_batches': len(batches),
             'num_discoveries': num_discoveries,
             'time_spent': time_spent,
+            'discoveries_per_batch_plot': discoveries_per_batch_plot,
             'topbarpathlist': topbarpathlist,
         }
 
