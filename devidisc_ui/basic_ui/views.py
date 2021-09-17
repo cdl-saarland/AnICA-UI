@@ -169,11 +169,14 @@ class CampaignTable(tables.Table):
             verbose_name="# Batches")
     num_discoveries = tables.Column(attrs={"td": campaign_table_attrs, "th": campaign_table_attrs},
             verbose_name="# Discoveries")
+    init_interesting_sample_ratio = tables.Column(attrs={"td": campaign_table_attrs, "th": campaign_table_attrs},
+            verbose_name="Initial Interesting Sample Ratio")
     time_spent = tables.Column(attrs={"td": campaign_table_attrs, "th": campaign_table_attrs},
             verbose_name="Run-Time")
 
     class Meta:
         row_attrs = campaign_table_attrs
+
 
 def all_campaigns(request):
     campaigns = Campaign.objects.all()
@@ -183,6 +186,12 @@ def all_campaigns(request):
         batches = campaign.discoverybatch_set.all()
         num_discoveries = sum([b.discovery_set.count() for b in batches])
         tool_list = campaign.tools.all()
+        init_interesting_sample_ratio = None
+        if len(batches) > 0:
+            init_batch = batches[0]
+            if init_batch.num_sampled > 0:
+                init_interesting_sample_ratio = init_batch.num_interesting / init_batch.num_sampled
+
         data.append({
             'campaign_id': campaign.id,
             'tools': ", ".join(map(str, tool_list)),
@@ -190,6 +199,7 @@ def all_campaigns(request):
             'host_pc': campaign.host_pc,
             'num_batches': len(batches),
             'num_discoveries': num_discoveries,
+            'init_interesting_sample_ratio': init_interesting_sample_ratio,
             'time_spent': prettify_seconds(campaign.total_seconds),
             })
 
