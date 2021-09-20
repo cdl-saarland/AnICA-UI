@@ -29,18 +29,11 @@
 
     <h3>Result Summary:</h3>
     <table>
-      <tr>
-        <td>batches run:</td>
-        <td>{{ num_discovery_batches }}</td>
-      </tr>
-      <tr>
-        <td>discoveries made:</td>
-        <td>{{ num_discoveries }}</td>
-      </tr>
-      <tr>
-        <td>time spent:</td>
-        <td>{{ time_spent }}</td>
-      </tr>
+        {% for key, value in stats %}
+            <tr>
+                <td>{{key}}:</td><td>{{value}}</td>
+            </tr>
+        {% endfor %}
     </table>
 
     <h3>Graphs:</h3>

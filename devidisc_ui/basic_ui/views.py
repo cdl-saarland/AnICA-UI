@@ -136,7 +136,7 @@ def prettify_absblock(absblock, hl_expansion=None, skip_top=False, add_schemes=F
             content_id = "expl_schemes_{}".format(idx) # TODO add a unique identifier before the idx
             res += "<tr class=\"absinsn\"><td class=\"absinsn\"></td><td class=\"absinsn\">"
             res += "<div class=\"absinsn indent_content\">"
-            res += "Feasible Schemes: {} <button onclick=\"(function(){{let el = document.getElementById('{content_id}'); if (el.style.visibility === 'visible') {{el.style.visibility = 'collapse'; }} else {{el.style.visibility = 'visible';}} }})()\">show</button>\n".format(len(feasible_schemes), content_id=content_id)
+            res += "Respresented Schemes: {} <button onclick=\"(function(){{let el = document.getElementById('{content_id}'); if (el.style.visibility === 'visible') {{el.style.visibility = 'collapse'; }} else {{el.style.visibility = 'visible';}} }})()\">show</button>\n".format(len(feasible_schemes), content_id=content_id)
             res += "</div>"
             res += "</td></tr>\n"
 
@@ -387,14 +387,41 @@ def campaign(request, campaign_id):
 
     discoveries_per_batch_plot = make_discoveries_per_batch_plot(batches)
 
+    num_batches = len(batches)
+
+    if num_discoveries == 0:
+        avg_witness_length = None
+        avg_num_insns = None
+    else:
+        witness_lengths = 0
+        num_insns = 0
+        for b in batches:
+            for discovery in b.discovery_set.all():
+                witness_lengths += discovery.witness_len
+                num_insns += discovery.num_insns
+        avg_witness_length = witness_lengths / num_discoveries
+        avg_witness_length = '{:.2f}'.format(avg_witness_length)
+
+        avg_num_insns = num_insns / num_discoveries
+        avg_num_insns = '{:.2f}'.format(avg_num_insns)
+
+    discoveries_per_batch = None if num_batches == 0 else '{:.2f}'.format(num_discoveries / num_batches)
+
+    stats = [
+            ('batches run', num_batches),
+            ('discoveries made', num_discoveries),
+            ('discoveries per batch', discoveries_per_batch),
+            ('avg witness length', avg_witness_length),
+            ('avg number of instructions', avg_num_insns),
+            ('time spent', time_spent),
+        ]
+
     context = {
             'campaign': campaign_obj,
             'tool_list': tool_list,
             'termination_condition': termination_condition,
             'abstraction_config': cfg_str,
-            'num_discovery_batches': len(batches),
-            'num_discoveries': num_discoveries,
-            'time_spent': time_spent,
+            'stats': stats,
             'discoveries_per_batch_plot': discoveries_per_batch_plot,
             'topbarpathlist': topbarpathlist,
         }
@@ -438,14 +465,6 @@ class DiscoveryTable(tables.Table):
             self._actx = res.actx
         return mark_safe(prettify_absblock(res, skip_top=True)) # TODO we might want to use django methods to create this html in the first place
 
-    def render_num_insns(self, value, record):
-        return len(record.absblock['ab']['abs_insns'])
-
-    def order_num_insns(self, queryset, is_descending):
-        queryset = queryset.annotate(
-            num_insns=len(F('absblock')['ab']['abs_insns']) # TODO not yet working!
-        ).order_by(("-" if is_descending else "") + "num_insns")
-        return (queryset, True)
 
 def all_discoveries(request, campaign_id):
     table = DiscoveryTable(Discovery.objects.filter(batch__campaign_id=campaign_id))
