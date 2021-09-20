@@ -57,6 +57,8 @@ def make_interestingness_histogramm_plot(measurements):
     interestingnesses = [ m.interestingness for m in measurements ]
 
     finite_entries = [i for i in interestingnesses if math.isfinite(i)]
+    if len(finite_entries) == 0:
+        return None
     max_finite = max(finite_entries)
     inf_val = abs(max_finite) * 1.5
 
@@ -441,7 +443,7 @@ class DiscoveryTable(tables.Table):
 
     def order_num_insns(self, queryset, is_descending):
         queryset = queryset.annotate(
-            num_insns=len(F('absblock')['ab']['abs_insns'])
+            num_insns=len(F('absblock')['ab']['abs_insns']) # TODO not yet working!
         ).order_by(("-" if is_descending else "") + "num_insns")
         return (queryset, True)
 

@@ -121,8 +121,8 @@ def import_campaign(campaign_dir):
                     mean_interestingness = ab_metrics['mean_interestingness']
                     ab_coverage = ab_metrics['ab_coverage']
                 else:
-                    mean_interestingness = None
-                    ab_coverage = None
+                    mean_interestingness = 42.0
+                    ab_coverage = 42.0
 
                 discovery_obj = batch_obj.discovery_set.create(
                         identifier = gen_id,
