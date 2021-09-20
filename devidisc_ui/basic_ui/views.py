@@ -260,11 +260,17 @@ class CampaignTable(tables.Table):
 
 
 def all_campaigns(request):
+    topbarpathlist = [
+            ('all campaigns', django.urls.reverse('basic_ui:all_campaigns')),
+        ]
+
     campaigns = Campaign.objects.all()
 
     if len(campaigns) == 0:
-        # TODO custom page
-        pass
+        return render(request, "basic_ui/all_campaigns_empty.html", {
+            "title": "All Campaigns",
+            'topbarpathlist': topbarpathlist,
+        })
 
     assert len(campaigns) > 0
 
@@ -310,10 +316,6 @@ def all_campaigns(request):
     table = CampaignTable(data)
 
     tables.RequestConfig(request).configure(table)
-
-    topbarpathlist = [
-            ('all campaigns', django.urls.reverse('basic_ui:all_campaigns')),
-        ]
 
     return render(request, "basic_ui/data_table.html", {
         "title": "All Campaigns",
