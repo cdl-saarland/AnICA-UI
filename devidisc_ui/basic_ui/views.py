@@ -286,6 +286,9 @@ class CampaignTable(tables.Table):
     time_spent = tables.Column(attrs={"td": campaign_table_attrs, "th": campaign_table_attrs},
             verbose_name="Run-Time")
 
+    def render_time_spent(self, value):
+        return prettify_seconds(value)
+
     class Meta:
         row_attrs = campaign_table_attrs
 
@@ -341,7 +344,7 @@ def all_campaigns(request):
             'num_batches': len(batches),
             'num_discoveries': num_discoveries,
             'init_interesting_sample_ratio': init_interesting_sample_ratio,
-            'time_spent': prettify_seconds(campaign.total_seconds),
+            'time_spent': campaign.total_seconds,
             })
 
     table = CampaignTable(data)
