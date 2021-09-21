@@ -47,7 +47,7 @@ def get_docs(site_name):
     title_line = lines[0]
     assert title_line[0] == '#'
     title = title_line[1:]
-    body = "\n".join(lines[1:])
+    body = "".join(lines[1:])
 
     body_html = mark_safe(markdown(body))
 
