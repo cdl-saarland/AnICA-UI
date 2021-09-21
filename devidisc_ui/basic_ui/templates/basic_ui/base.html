@@ -8,6 +8,18 @@
     <title>{% block title %}{% endblock %} - DeviDisc UI</title>
 </head>
 
+<script type="text/javascript">
+function show_docs() {
+    const container = document.getElementById("helpcontainer");
+    container.style.display = "block";
+}
+
+function hide_docs() {
+  const container = document.getElementById("helpcontainer");
+    container.style.display = "none";
+}
+</script>
+
 <body>
     <div id='topbar'>
         <div id='topbartext'>
@@ -20,9 +32,15 @@
             {% endfor %}
             </span>
         </div>
+        <button id="help-open-button" onclick="show_docs()">Open Docs</button>
     </div>
     <div id="content">
         {% block content %}{% endblock %}
+    </div>
+    <div id="helpcontainer">
+        <button id="help-close-button" onclick="hide_docs()">Close Docs</button>
+        <h2>Feature Documentation: {{ helptitle }}</h2>
+        {{ helpcontent }}
     </div>
 </body>
 </html>

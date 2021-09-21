@@ -7,9 +7,12 @@ from django.utils.html import escape
 
 from django.db.models import F
 
+from django.core.cache import cache as CACHE
+
 from collections import defaultdict
 import json
 import math
+from pathlib import Path
 
 from devidisc.abstractblock import AbstractBlock
 from devidisc.abstractioncontext import AbstractionContext
@@ -20,12 +23,40 @@ from .models import Campaign, Discovery
 
 import django_tables2 as tables
 
+from markdown import markdown
+
 import matplotlib
 matplotlib.use('Agg')
 
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
 import io, base64
+
+
+def get_docs(site_name):
+    # cached = CACHE.get(site_name, None)
+    # if cached is not None:
+    #     return cached
+
+    base = Path(django.apps.apps.get_app_config('basic_ui').path)
+    doc_file = base / 'inline_docs' / (site_name + '.md' )
+    assert doc_file.is_file()
+
+    with open(doc_file, 'r') as f:
+        lines = f.readlines()
+    title_line = lines[0]
+    assert title_line[0] == '#'
+    title = title_line[1:]
+    body = "\n".join(lines[1:])
+
+    body_html = mark_safe(markdown(body))
+
+    res = { 'helptitle': title, 'helpcontent': body_html }
+
+    # CACHE.set(site_name, res)
+
+    return res
+
 
 def encode_plot(fig):
     flike = io.BytesIO()
@@ -317,11 +348,16 @@ def all_campaigns(request):
 
     tables.RequestConfig(request).configure(table)
 
-    return render(request, "basic_ui/data_table.html", {
+
+    context = {
         "title": "All Campaigns",
         "table": table,
         'topbarpathlist': topbarpathlist,
-    })
+    }
+
+    context.update(get_docs('all_campaigns'))
+
+    return render(request, "basic_ui/data_table.html",  context)
 
 
 
@@ -428,6 +464,8 @@ def campaign(request, campaign_id):
             'topbarpathlist': topbarpathlist,
         }
 
+    context.update(get_docs('single_campaign'))
+
     return render(request, 'basic_ui/campaign_overview.html', context)
 
 discovery_table_attrs = {"class": "discoverytable"}
@@ -479,11 +517,14 @@ def all_discoveries(request, campaign_id):
             ('all discoveries', django.urls.reverse('basic_ui:all_discoveries', kwargs={'campaign_id': campaign_id})),
         ]
 
-    return render(request, "basic_ui/data_table.html", {
-        "title": "Discoveries",
-        "table": table,
-        'topbarpathlist': topbarpathlist,
-    })
+    context = {
+            "title": "Discoveries",
+            "table": table,
+            'topbarpathlist': topbarpathlist,
+        }
+    context.update(get_docs('all_discoveries'))
+
+    return render(request, "basic_ui/data_table.html", context)
 
 
 def discovery(request, campaign_id, discovery_id):
@@ -514,4 +555,6 @@ def discovery(request, campaign_id, discovery_id):
             'witness_length': witness_length,
             'interestingness_histogram': plot,
         }
+    context.update(get_docs('single_discovery'))
+
     return render(request, 'basic_ui/discovery_overview.html', context)

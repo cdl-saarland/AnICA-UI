@@ -3,5 +3,6 @@ Django
 django_tables2
 
 matplotlib
+markdown
 
 -e lib/devidisc
