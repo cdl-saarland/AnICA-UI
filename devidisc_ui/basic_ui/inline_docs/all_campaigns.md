@@ -19,7 +19,7 @@ This column lists which tools where used for this discovery campaign.
 
 #### Config Delta
 
-This column shows the relevant differences of the configuration used for the discovery campaign from a common base of the configs of all registered campagins.
+This column shows the relevant differences of the configuration used for the discovery campaign from a common base of the configurations of all registered campaigns.
 Entries prefixed with a `+` are added, those with a `-` are discarded compared to the common base.
 A dashed entry means that the configuration is identical to the common base configuration.
 The full configuration with a documentation of the meaning of the options can be found on the single campaign view.
