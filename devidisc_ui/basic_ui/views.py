@@ -280,6 +280,9 @@ class DiscoveryTable(tables.Table):
             self._actx = res.actx
         return prettify_absblock(res, skip_top=True)
 
+    def render_interestingness(self, value):
+        return "{:.2f}".format(value)
+
 
 def all_discoveries(request, campaign_id):
     table = DiscoveryTable(Discovery.objects.filter(batch__campaign_id=campaign_id))
