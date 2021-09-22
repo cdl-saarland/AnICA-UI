@@ -1,7 +1,14 @@
 from django.db import models
+from django.utils.dateparse import parse_datetime
 
-# Create your models here.
 import json
+from pathlib import Path
+
+from devidisc.configurable import load_json_config
+
+import logging
+logger = logging.getLogger(__name__)
+
 
 class Tool(models.Model):
     full_name = models.CharField(max_length=255)
@@ -59,13 +66,6 @@ class Witness(models.Model):
     discovery = models.OneToOneField(Discovery, on_delete=models.CASCADE)
 
 
-from pathlib import Path
-
-from django.utils.dateparse import parse_datetime
-
-from devidisc.configurable import load_json_config
-
-
 def import_campaign(campaign_dir):
     base_dir = Path(campaign_dir)
 
@@ -76,6 +76,7 @@ def import_campaign(campaign_dir):
     termination_condition = campaign_config['termination']
 
     report = load_json_config(base_dir / "report.json")
+
     date = parse_datetime(report['start_date'])
     total_seconds = report['seconds_passed']
     host_pc = report['host_pc']
@@ -95,6 +96,7 @@ def import_campaign(campaign_dir):
     for t in tool_objs:
         campaign.tools.add(t.id)
 
+    # check whether there is a file containing metrics produced in a preprocessing step
     metrics_path = base_dir / 'metrics.json'
     if metrics_path.exists():
         with open(metrics_path, 'r') as f:
@@ -102,11 +104,30 @@ def import_campaign(campaign_dir):
     else:
         metrics_dict = {}
 
+    # Create all the batch and sample objects
+    # Bulk creation is key here for reasonable performance!
+
+    batch_objs = []
     for batch_entry in report['per_batch_stats']:
         num_sampled = batch_entry['num_sampled']
         num_interesting = batch_entry['num_interesting']
         batch_time = batch_entry['batch_time']
-        batch_obj = campaign.discoverybatch_set.create(num_sampled=num_sampled, num_interesting=num_interesting, batch_time=batch_time)
+        batch_objs.append(DiscoveryBatch(
+                campaign=campaign,
+                num_sampled=num_sampled,
+                num_interesting=num_interesting,
+                batch_time=batch_time,
+            ))
+    DiscoveryBatch.objects.bulk_create(batch_objs)
+
+    # We need to retrieve the bulk-inserted objects with an additional query,
+    # since most db backends do not provide the ids of bulk-inserted objects.
+    # Nevertheless, this is a lot faster than creating each batch object
+    # individually.
+    batch_objs = DiscoveryBatch.objects.filter(campaign=campaign)
+
+    discovery_objs = []
+    for batch_entry, batch_obj in zip(report['per_batch_stats'], batch_objs):
         for sample_entry in batch_entry['per_interesting_sample_stats']:
             for gen_entry in sample_entry.get('per_generalization_stats', []):
                 gen_id = gen_entry['id']
@@ -126,20 +147,30 @@ def import_campaign(campaign_dir):
                     mean_interestingness = 42.0
                     ab_coverage = 42.0
 
-                discovery_obj = batch_obj.discovery_set.create(
+                discovery_objs.append(Discovery(
+                        batch = batch_obj,
                         identifier = gen_id,
                         absblock = absblock,
                         num_insns = num_insns,
                         witness_len = witness_len,
                         interestingness = mean_interestingness,
                         ab_coverage = ab_coverage,
-                    )
+                    ))
+    Discovery.objects.bulk_create(discovery_objs)
 
-                if ab_metrics is not None:
-                    for interestingness in ab_metrics['interestingness_series']:
-                        discovery_obj.measurement_set.create(
-                                interestingness=interestingness,
-                            )
+    if len(metrics_dict) > 0:
+        # We need to retrieve the bulk-inserted objects with an additional query,
+        # since most db backends do not provide the ids of bulk-inserted objects.
+        # Nevertheless, this is a lot faster than creating each discovery object
+        # individually.
+        discovery_objs = Discovery.objects.filter(batch__campaign=campaign)
+        measurement_objs = []
+        for discovery_obj in discovery_objs:
+            ab_metrics = metrics_dict.get(discovery_obj.identifier, None)
+            if ab_metrics is not None:
+                for interestingness in ab_metrics['interestingness_series']:
+                    measurement_objs.append(Measurement(discovery=discovery_obj, interestingness=interestingness))
+        Measurement.objects.bulk_create(measurement_objs)
 
 
 def clear_doc_entries(json_dict):
