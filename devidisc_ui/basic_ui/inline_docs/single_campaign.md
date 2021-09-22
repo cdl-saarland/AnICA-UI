@@ -21,6 +21,11 @@ The first time one of the conditions is satisfied after processing a batch, the 
 This is the detailed configuration used in the campaign for abstracting instructions, restricting instruction forms, judging the interestingness of basic blocks and general parameters of the discovery algorithm.
 Hover over the individual entries to see a short documentation of their meaning.
 
+### Prefix Control
+
+This section allows to select that only a prefix of the series of batches in the discovery campaign is considered for the following results and plots.
+This is helpful to compare campaigns with widely different running times in a fair way, by comparing the results for the same number of batches.
+
 ### Result Summary
 
 This section shows a number of metrics for the discovery campaign:

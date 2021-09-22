@@ -26,6 +26,11 @@
     <h3>Abstraction Config:</h3>
         {{ abstraction_config | safe }}
 
+    <h3>Prefix Control:</h3>
+
+    This page is currently only displaying results for the first <b>{{ batch_pos }}</b> out of <b>{{ total_batches }}</b> batches of the campaign.<br>
+
+    To show the first <input type="number" id="new_batch_pos" min="1" max="{{ total_batches }}" value="{{ total_batches }}"> instead, click here: <button id="change_prefix" onclick="change_prefix()">change prefix</button>
 
     <h3>Result Summary:</h3>
     <table>
@@ -47,3 +52,15 @@
         </ul>
 
 {% endblock %}
+
+
+{% block extra_scripts %}
+    <script type="text/javascript">
+        function change_prefix() {
+            const new_batch_pos = document.getElementById("new_batch_pos").value;
+            const current_url = window.location.href.split('?')[0];
+            window.location.replace(current_url + '?batch_pos=' + new_batch_pos)
+        }
+    </script>
+{% endblock %}
+

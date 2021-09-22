@@ -1,5 +1,5 @@
 from django.shortcuts import render, get_object_or_404
-from django.http import HttpResponse
+from django.http import HttpResponse, Http404
 import django
 
 from django.utils.safestring import mark_safe
@@ -65,9 +65,7 @@ def encode_plot(fig):
     return b64
 
 def make_discoveries_per_batch_plot(batches):
-    ordered = batches.order_by('pk')
-
-    objs = ordered.all()
+    objs = batches
 
     batch_idx = list(range(0, len(objs)))
     counts = [x.discovery_set.count() for x in objs]
@@ -408,27 +406,46 @@ def format_abstraction_config(abstraction_config):
 def campaign(request, campaign_id):
     campaign_obj = get_object_or_404(Campaign, pk=campaign_id)
 
+    # get the batch-independent information
     tool_list = campaign_obj.tools.all()
-
     termination_condition = list(campaign_obj.termination_condition.items())
+    cfg_str = format_abstraction_config(campaign_obj.config_dict)
 
-    total_seconds = campaign_obj.total_seconds
+    all_batches = list(campaign_obj.discoverybatch_set.all().order_by('pk'))
+    total_batches = len(all_batches)
 
-    time_spent = prettify_seconds(total_seconds)
+    # get the number of batches that we should use for this display
+    batch_pos_str = request.GET.get('batch_pos', total_batches)
 
-    batches = campaign_obj.discoverybatch_set.all()
+    try:
+        batch_pos = int(batch_pos_str)
+    except ValueError:
+        batch_pos = total_batches
+
+    # make sure that the position is in bounds
+    if batch_pos <= 0:
+        batch_pos = 1
+    if batch_pos > total_batches:
+        batch_pos = total_batches
+
+    # restrict to the first batch_pos batches
+    batches = all_batches[:batch_pos]
+
+    num_batches = len(batches)
+
     num_discoveries = sum([b.discovery_set.count() for b in batches])
 
-    cfg_str = format_abstraction_config(campaign_obj.config_dict)
+    # TODO this should be batch_pos dependent
+    total_seconds = campaign_obj.total_seconds
+    time_spent = prettify_seconds(total_seconds) + " TODO: currently not position dependent!"
 
     topbarpathlist = [
             ('all campaigns', django.urls.reverse('basic_ui:all_campaigns')),
             (f'campaign {campaign_id}', django.urls.reverse('basic_ui:campaign', kwargs={'campaign_id': campaign_id})),
         ]
 
+    # create plots
     discoveries_per_batch_plot = make_discoveries_per_batch_plot(batches)
-
-    num_batches = len(batches)
 
     if num_discoveries == 0:
         avg_witness_length = None
@@ -462,6 +479,10 @@ def campaign(request, campaign_id):
             'tool_list': tool_list,
             'termination_condition': termination_condition,
             'abstraction_config': cfg_str,
+
+            'batch_pos': batch_pos,
+            'total_batches': total_batches,
+
             'stats': stats,
             'discoveries_per_batch_plot': discoveries_per_batch_plot,
             'topbarpathlist': topbarpathlist,
