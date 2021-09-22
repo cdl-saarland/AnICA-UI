@@ -192,9 +192,8 @@ def campaign(request, campaign_id):
 
     num_discoveries = sum([b.discovery_set.count() for b in batches])
 
-    # TODO this should be batch_pos dependent
-    total_seconds = campaign_obj.total_seconds
-    time_spent = prettify_seconds(total_seconds) + " TODO: currently not position dependent!"
+    total_seconds = sum([b.batch_time for b in batches])
+    time_spent = prettify_seconds(total_seconds)
 
     topbarpathlist = [
             ('all campaigns', django.urls.reverse('basic_ui:all_campaigns')),

@@ -29,6 +29,7 @@ class DiscoveryBatch(models.Model):
     campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE)
     num_sampled = models.IntegerField()
     num_interesting = models.IntegerField()
+    batch_time = models.IntegerField()
 
 class InsnScheme(models.Model):
     text = models.CharField(max_length=255)
@@ -104,7 +105,8 @@ def import_campaign(campaign_dir):
     for batch_entry in report['per_batch_stats']:
         num_sampled = batch_entry['num_sampled']
         num_interesting = batch_entry['num_interesting']
-        batch_obj = campaign.discoverybatch_set.create(num_sampled=num_sampled, num_interesting=num_interesting)
+        batch_time = batch_entry['batch_time']
+        batch_obj = campaign.discoverybatch_set.create(num_sampled=num_sampled, num_interesting=num_interesting, batch_time=batch_time)
         for sample_entry in batch_entry['per_interesting_sample_stats']:
             for gen_entry in sample_entry.get('per_generalization_stats', []):
                 gen_id = gen_entry['id']
