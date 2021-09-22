@@ -120,12 +120,12 @@ def all_campaigns(request):
 
     data = []
     for campaign, delta in zip(campaigns, config_deltas):
-        batches = campaign.discoverybatch_set.all()
-        num_discoveries = sum([b.discovery_set.count() for b in batches])
+        num_batches = campaign.discoverybatch_set.count()
+        num_discoveries = Discovery.objects.filter(batch__campaign=campaign).count()
         tool_list = campaign.tools.all()
         init_interesting_sample_ratio = None
-        if len(batches) > 0:
-            init_batch = batches[0]
+        if num_batches > 0:
+            init_batch = campaign.discoverybatch_set.order_by('pk').first()
             if init_batch.num_sampled > 0:
                 init_interesting_sample_ratio = init_batch.num_interesting / init_batch.num_sampled
 
@@ -137,7 +137,7 @@ def all_campaigns(request):
             'config_delta': config_delta_html,
             'date': campaign.date,
             'host_pc': campaign.host_pc,
-            'num_batches': len(batches),
+            'num_batches': num_batches,
             'num_discoveries': num_discoveries,
             'init_interesting_sample_ratio': init_interesting_sample_ratio,
             'time_spent': campaign.total_seconds,
