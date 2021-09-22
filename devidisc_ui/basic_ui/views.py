@@ -1,6 +1,6 @@
 import django
 from django.core.cache import cache as CACHE
-from django.db.models import F
+from django.db.models import F, Sum, Avg
 from django.http import HttpResponse, Http404
 from django.shortcuts import render, get_object_or_404
 from django.utils.safestring import mark_safe
@@ -168,8 +168,8 @@ def campaign(request, campaign_id):
     termination_condition = list(campaign_obj.termination_condition.items())
     cfg_str = prettify_abstraction_config(campaign_obj.config_dict)
 
-    all_batches = list(campaign_obj.discoverybatch_set.all().order_by('pk'))
-    total_batches = len(all_batches)
+    all_batches = campaign_obj.discoverybatch_set.all().order_by('batch_index')
+    total_batches = all_batches.count()
 
     # get the number of batches that we should use for this display
     batch_pos_str = request.GET.get('batch_pos', total_batches)
@@ -188,11 +188,12 @@ def campaign(request, campaign_id):
     # restrict to the first batch_pos batches
     batches = all_batches[:batch_pos]
 
-    num_batches = len(batches)
+    num_batches = batch_pos
 
-    num_discoveries = sum([b.discovery_set.count() for b in batches])
+    relevant_discoveries = Discovery.objects.filter(batch__campaign=campaign_obj, batch__batch_index__range=(0, batch_pos-1))
+    num_discoveries = relevant_discoveries.count()
 
-    total_seconds = sum([b.batch_time for b in batches])
+    total_seconds = batches.aggregate(Sum('batch_time'))['batch_time__sum']
     time_spent = prettify_seconds(total_seconds)
 
     topbarpathlist = [
@@ -209,15 +210,9 @@ def campaign(request, campaign_id):
     else:
         witness_lengths = 0
         num_insns = 0
-        for b in batches:
-            for discovery in b.discovery_set.all():
-                witness_lengths += discovery.witness_len
-                num_insns += discovery.num_insns
-        avg_witness_length = witness_lengths / num_discoveries
-        avg_witness_length = '{:.2f}'.format(avg_witness_length)
-
-        avg_num_insns = num_insns / num_discoveries
-        avg_num_insns = '{:.2f}'.format(avg_num_insns)
+        agg = relevant_discoveries.aggregate(Avg('witness_len'), Avg('num_insns'))
+        avg_witness_length = '{:.2f}'.format(agg['witness_len__avg'])
+        avg_num_insns = '{:.2f}'.format(agg['num_insns__avg'])
 
     discoveries_per_batch = None if num_batches == 0 else '{:.2f}'.format(num_discoveries / num_batches)
 
