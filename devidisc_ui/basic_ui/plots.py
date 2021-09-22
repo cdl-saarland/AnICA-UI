@@ -1,3 +1,14 @@
+"""
+A helper module containing several functions for creating matplotlib plots for
+display in views.
+
+The plots are rendered as png files, which are then base64-encoded and directly
+inserted into the html templates.
+
+The idea for this comes from this page:
+    https://spapas.github.io/2021/02/08/django-matplotlib/
+"""
+
 import math
 
 import matplotlib
@@ -6,11 +17,13 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
 import io, base64
 
+
 def encode_plot(fig):
     flike = io.BytesIO()
     fig.savefig(flike)
     b64 = base64.b64encode(flike.getvalue()).decode()
     return b64
+
 
 def make_discoveries_per_batch_plot(batches):
     objs = batches
