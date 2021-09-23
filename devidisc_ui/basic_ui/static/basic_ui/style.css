@@ -1,13 +1,25 @@
 
+:root {
+    /* color variables to use throughout the stylesheet*/
+    --main-bg: #eee;
+    --content-bg: #ddd;
+    --topbar-bg: #333;
+    --help-border: #ccc;
+    --table-bg: #ccc;
+    --table-border: #999;
+    --link-weak: black;
+    --explscheme-col: white;
+}
+
 body {
     font-size: 100%;
-    background-color: #eee;
+    background-color: var(--main-bg);
 }
 
 #topbar {
     z-index: 1000;
     overflow: hidden;
-    background-color: #333;
+    background-color: var(--topbar-bg);
     position: fixed;
     top: 0;
     left: 0;
@@ -23,7 +35,7 @@ body {
     margin-left: 10%;
     white-space: nowrap;
     font-size: 32px;
-    color: #eee;
+    color: var(--main-bg);
 }
 
 #topbarpath {
@@ -33,7 +45,7 @@ body {
 }
 
 #topbarpath > a {
-    color: #eee;
+    color: var(--main-bg);
     text-decoration: none;
 }
 
@@ -46,14 +58,14 @@ body {
     max-width: 1200px;
     margin-left: auto;
     margin-right: auto;
-    background-color: #ddd;
+    background-color: var(--content-bg);
 }
 
 #helpcontainer {
     display: none;
     z-index: 1100;
     position: fixed;
-    background-color: #eee;
+    background-color: var(--main-bg);
     overflow: scroll;
 
     padding-top: 10px;
@@ -69,7 +81,7 @@ body {
         top: 0;
         right: 0;
         resize: horizontal;
-        border-left: 6px solid #ccc;
+        border-left: 6px solid var(--help-border);
     }
 }
 
@@ -80,7 +92,7 @@ body {
         bottom: 0;
         left: 0;
         resize: vertical;
-        border-top: 6px solid #ccc;
+        border-top: 6px solid var(--help-border);
     }
 }
 
@@ -107,12 +119,8 @@ td.campaigntable, th.campaigntable {
 }
 
 th.campaigntable {
-    background-color: #ccc;
+    background-color: var(--table-bg);
 }
-
-/* tr.campaigntable.odd { */
-/*     background-color: #ccc; */
-/* } */
 
 td.discoverytable, th.discoverytable {
     text-align: center;
@@ -120,12 +128,12 @@ td.discoverytable, th.discoverytable {
 }
 
 th.discoverytable {
-    background-color: #ccc;
+    background-color: var(--table-bg);
 }
 
 table.discoverytable, th.discoverytable, td.discoverytable {
     border-collapse: collapse;
-    border: 1px solid #999;
+    border: 1px solid var(--table-border);
 }
 
 ul.pagination > li {
@@ -144,13 +152,13 @@ ul.pagination {
 
 /* prettier link formatting */
 th > a {
-    color: black;
+    color: var(--link-weak);
     font-weight: bold;
     text-decoration: none;
 }
 
 ul.pagination > li > a {
-    color: black;
+    color: var(--link-weak);
     font-weight: bold;
     text-decoration: none;
 }
@@ -175,7 +183,7 @@ table.absinsn {
 
 div.explicit_schemes {
     padding: 20px;
-    background-color: white;
+    background-color: var(--explscheme-col);
     resize: vertical;
     width: auto;
     height: 300px;
