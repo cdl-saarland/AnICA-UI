@@ -62,7 +62,7 @@ class Discovery(models.Model):
     witness_len = models.IntegerField()
     interestingness = models.FloatField()
     ab_coverage = models.FloatField()
-    occuring_insnschemes = models.ManyToManyField(InsnScheme)
+    occurring_insnschemes = models.ManyToManyField(InsnScheme)
 
     def __str__(self):
         return self.identifier
@@ -193,12 +193,12 @@ def import_campaign(campaign_dir):
     ischeme_objs = InsnScheme.objects.all()
     istr2obj = { obj.text: obj for obj in ischeme_objs }
 
-    # Discovery.occuring_insnschemes is a many-to-many relation. To fill such a
+    # Discovery.occurring_insnschemes is a many-to-many relation. To fill such a
     # relation using bulk inserts (which are essential for performance), we
     # need to get a bit more creative: Many-to-many relationships in django are
     # backed by a `through` model, which we obtain here. This is just a normal
     # model, which we can fill in bulk.
-    discovery2ischeme_cls = Discovery.occuring_insnschemes.through
+    discovery2ischeme_cls = Discovery.occurring_insnschemes.through
 
     through_objs = []
 

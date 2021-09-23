@@ -1,6 +1,6 @@
 import django
 from django.core.cache import cache as CACHE
-from django.db.models import F, Q, Sum, Avg, Count
+from django.db.models import F, Q, Sum, Avg, Count, Value
 from django.http import HttpResponse, Http404
 from django.shortcuts import render, get_object_or_404
 from django.utils.safestring import mark_safe
@@ -328,10 +328,10 @@ insnscheme_table_attrs = {"class": "insnschemetable"}
 
 class InsnSchemeTable(tables.Table):
     text = tables.Column(
+            linkify=(lambda value, record: django.urls.reverse('basic_ui:insnscheme', kwargs={'campaign_id': record.campaign_id, 'ischeme_id': record.id})),
             attrs={"td": insnscheme_table_attrs, "th": insnscheme_table_attrs},
             verbose_name="InsnScheme",
         )
-    # TODO linkify
 
     def render_text(self, value):
         shorten_length = 60
@@ -364,6 +364,8 @@ def all_insnschemes(request, campaign_id):
         attrs={"td": insnscheme_table_attrs, "th": insnscheme_table_attrs},
         verbose_name=f'L{num_insns}')) )
 
+    insnscheme_objs = insnscheme_objs.annotate(campaign_id=Value(campaign_id))
+
     table = InsnSchemeTable(insnscheme_objs, extra_columns=extra_cols)
 
     tables.RequestConfig(request, paginate=False).configure(table)
@@ -380,6 +382,32 @@ def all_insnschemes(request, campaign_id):
             'topbarpathlist': topbarpathlist,
         }
     context.update(get_docs('all_insnschemes'))
+
+    return render(request, "basic_ui/data_table.html", context)
+
+
+def discoveries_for_insnscheme(request, campaign_id, ischeme_id):
+    ischeme_obj = get_object_or_404(InsnScheme, pk=ischeme_id)
+
+    discoveries = ischeme_obj.discovery_set.filter(batch__campaign_id=campaign_id)
+
+    table = DiscoveryTable(discoveries)
+
+    tables.RequestConfig(request).configure(table)
+
+    topbarpathlist = [
+            ('all campaigns', django.urls.reverse('basic_ui:all_campaigns')),
+            (f'campaign {campaign_id}', django.urls.reverse('basic_ui:campaign', kwargs={'campaign_id': campaign_id})),
+            ('all InsnSchemes', django.urls.reverse('basic_ui:all_insnschemes', kwargs={'campaign_id': campaign_id})),
+            (f'InsnScheme \'{ischeme_obj.text}\'', django.urls.reverse('basic_ui:insnscheme', kwargs={'campaign_id': campaign_id, 'ischeme_id': ischeme_id})),
+        ]
+
+    context = {
+            "title": "Discoveries connected to an InsnScheme ",
+            "table": table,
+            'topbarpathlist': topbarpathlist,
+        }
+    context.update(get_docs('single_insnscheme'))
 
     return render(request, "basic_ui/data_table.html", context)
 
