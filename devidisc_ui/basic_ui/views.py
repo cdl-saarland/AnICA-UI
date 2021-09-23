@@ -1,6 +1,6 @@
 import django
 from django.core.cache import cache as CACHE
-from django.db.models import F, Sum, Avg
+from django.db.models import F, Q, Sum, Avg, Count
 from django.http import HttpResponse, Http404
 from django.shortcuts import render, get_object_or_404
 from django.utils.safestring import mark_safe
@@ -13,7 +13,7 @@ from markdown import markdown
 from devidisc.abstractioncontext import AbstractionContext
 from devidisc.configurable import config_diff
 
-from .models import Campaign, Discovery
+from .models import Campaign, Discovery, InsnScheme
 from .custom_pretty_printing import prettify_absblock, prettify_seconds, prettify_config_diff, prettify_abstraction_config
 from .helpers import load_abstract_block
 
@@ -322,3 +322,66 @@ def discovery(request, campaign_id, discovery_id):
     context.update(get_docs('single_discovery'))
 
     return render(request, 'basic_ui/discovery_overview.html', context)
+
+
+insnscheme_table_attrs = {"class": "insnschemetable"}
+
+class InsnSchemeTable(tables.Table):
+    text = tables.Column(
+            attrs={"td": insnscheme_table_attrs, "th": insnscheme_table_attrs},
+            verbose_name="InsnScheme",
+        )
+    # TODO linkify
+
+    def render_text(self, value):
+        shorten_length = 60
+        if len(value) > shorten_length:
+            return value[:shorten_length] + ' [...]'
+        return value
+
+    class Meta:
+        row_attrs = insnscheme_table_attrs
+        attrs = insnscheme_table_attrs
+
+
+def all_insnschemes(request, campaign_id):
+    insnscheme_objs = InsnScheme.objects.filter(discovery__batch__campaign_id=campaign_id).distinct().order_by('text')
+
+    extra_cols = []
+
+    insnscheme_objs = insnscheme_objs.annotate(total_discovery_count=Count('discovery'))
+
+    extra_cols.append( ('total_discovery_count', tables.Column(accessor='total_discovery_count',
+        attrs={"td": insnscheme_table_attrs, "th": insnscheme_table_attrs},
+        verbose_name='Total Occurrences')) )
+
+    possible_num_insns = list(map(lambda x: x['num_insns'], Discovery.objects.filter(batch__campaign_id=campaign_id).values('num_insns').distinct().order_by('num_insns')))
+    for num_insns in possible_num_insns:
+        field_name = f"discovery_count_{num_insns}"
+        kwargs = {field_name: Count('discovery', filter=Q(discovery__num_insns=num_insns))}
+        insnscheme_objs = insnscheme_objs.annotate(**kwargs)
+        extra_cols.append( (field_name, tables.Column(accessor=field_name,
+        attrs={"td": insnscheme_table_attrs, "th": insnscheme_table_attrs},
+        verbose_name=f'L{num_insns}')) )
+
+    table = InsnSchemeTable(insnscheme_objs, extra_columns=extra_cols)
+
+    tables.RequestConfig(request, paginate=False).configure(table)
+
+    topbarpathlist = [
+            ('all campaigns', django.urls.reverse('basic_ui:all_campaigns')),
+            (f'campaign {campaign_id}', django.urls.reverse('basic_ui:campaign', kwargs={'campaign_id': campaign_id})),
+            ('all InsnSchemes', django.urls.reverse('basic_ui:all_insnschemes', kwargs={'campaign_id': campaign_id})),
+        ]
+
+    context = {
+            "title": "InsnSchemes",
+            "table": table,
+            'topbarpathlist': topbarpathlist,
+        }
+    context.update(get_docs('all_insnschemes'))
+
+    return render(request, "basic_ui/data_table.html", context)
+
+
+

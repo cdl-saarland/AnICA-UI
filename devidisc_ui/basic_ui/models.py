@@ -186,6 +186,8 @@ def import_campaign(campaign_dir):
     existing_ischemes = set(map(lambda x: x.text, InsnScheme.objects.all()))
     required_ischemes = used_ischemes - existing_ischemes
     if len(required_ischemes) > 0:
+        # make sure that the length of the text field is sufficient
+        assert all(map(lambda x: len(x) <= 255, required_schemes))
         InsnScheme.objects.bulk_create(list(map(lambda x: InsnScheme(text=x), required_ischemes)))
 
     ischeme_objs = InsnScheme.objects.all()

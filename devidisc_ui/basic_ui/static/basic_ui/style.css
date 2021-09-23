@@ -136,6 +136,21 @@ table.discoverytable, th.discoverytable, td.discoverytable {
     border: 1px solid var(--table-border);
 }
 
+td.insnschemetable, th.insnschemetable {
+    text-align: left;
+    padding: 6px 10px;
+}
+
+th.insnschemetable {
+    background-color: var(--table-bg);
+}
+
+table.insnschemetable, th.insnschemetable, td.insnschemetable {
+    border-collapse: collapse;
+    border: 1px solid var(--table-border);
+}
+
+
 ul.pagination > li {
     display: inline;
     padding-left: 5px;
