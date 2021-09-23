@@ -1,6 +1,7 @@
 from django.db import models
 from django.utils.dateparse import parse_datetime
 
+from collections import defaultdict
 import json
 from pathlib import Path
 
@@ -9,6 +10,9 @@ from devidisc.configurable import load_json_config
 import logging
 logger = logging.getLogger(__name__)
 
+from devidisc.abstractblock import AbstractBlock
+
+from .helpers import load_abstract_block
 
 class Tool(models.Model):
     full_name = models.CharField(max_length=255)
@@ -133,6 +137,10 @@ def import_campaign(campaign_dir):
     # individually.
     batch_objs = DiscoveryBatch.objects.filter(campaign=campaign)
 
+    ischeme_map = defaultdict(set)
+    used_ischemes = set()
+
+    actx = None
     discovery_objs = []
     for batch_entry, batch_obj in zip(report['per_batch_stats'], batch_objs):
         for sample_entry in batch_entry['per_interesting_sample_stats']:
@@ -145,6 +153,16 @@ def import_campaign(campaign_dir):
                 clear_doc_entries(absblock)
                 num_insns = len(absblock['ab']['abs_insns'])
                 witness_len = gen_entry['witness_len']
+
+                ab = load_abstract_block(absblock, actx)
+                if actx is None:
+                    actx = ab.actx
+
+                for ai in ab.abs_insns:
+                    feasible_schemes = actx.insn_feature_manager.compute_feasible_schemes(ai.features)
+                    for istr in map(str, feasible_schemes):
+                        used_ischemes.add(istr)
+                        ischeme_map[gen_id].add(istr)
 
                 ab_metrics = metrics_dict.get(gen_id, None)
                 if ab_metrics is not None:
@@ -165,19 +183,42 @@ def import_campaign(campaign_dir):
                     ))
     Discovery.objects.bulk_create(discovery_objs)
 
-    if len(metrics_dict) > 0:
-        # We need to retrieve the bulk-inserted objects with an additional query,
-        # since most db backends do not provide the ids of bulk-inserted objects.
-        # Nevertheless, this is a lot faster than creating each discovery object
-        # individually.
-        discovery_objs = Discovery.objects.filter(batch__campaign=campaign)
-        measurement_objs = []
-        for discovery_obj in discovery_objs:
-            ab_metrics = metrics_dict.get(discovery_obj.identifier, None)
-            if ab_metrics is not None:
-                for interestingness in ab_metrics['interestingness_series']:
-                    measurement_objs.append(Measurement(discovery=discovery_obj, interestingness=interestingness))
-        Measurement.objects.bulk_create(measurement_objs)
+    existing_ischemes = set(map(lambda x: x.text, InsnScheme.objects.all()))
+    required_ischemes = used_ischemes - existing_ischemes
+    if len(required_ischemes) > 0:
+        InsnScheme.objects.bulk_create(list(map(lambda x: InsnScheme(text=x), required_ischemes)))
+
+    ischeme_objs = InsnScheme.objects.all()
+    istr2obj = { obj.text: obj for obj in ischeme_objs }
+
+    # Discovery.occuring_insnschemes is a many-to-many relation. To fill such a
+    # relation using bulk inserts (which are essential for performance), we
+    # need to get a bit more creative: Many-to-many relationships in django are
+    # backed by a `through` model, which we obtain here. This is just a normal
+    # model, which we can fill in bulk.
+    discovery2ischeme_cls = Discovery.occuring_insnschemes.through
+
+    through_objs = []
+
+    # We need to retrieve the bulk-inserted objects with an additional query,
+    # since most db backends do not provide the ids of bulk-inserted objects.
+    # Nevertheless, this is a lot faster than creating each discovery object
+    # individually.
+    discovery_objs = Discovery.objects.filter(batch__campaign=campaign)
+    measurement_objs = []
+    for discovery_obj in discovery_objs:
+        ident = discovery_obj.identifier
+        for istr in ischeme_map[ident]:
+            insnscheme_obj = istr2obj[istr]
+            through_objs.append(discovery2ischeme_cls(discovery=discovery_obj, insnscheme=insnscheme_obj))
+
+        ab_metrics = metrics_dict.get(ident, None)
+        if ab_metrics is not None:
+            for interestingness in ab_metrics['interestingness_series']:
+                measurement_objs.append(Measurement(discovery=discovery_obj, interestingness=interestingness))
+    Measurement.objects.bulk_create(measurement_objs)
+    discovery2ischeme_cls.objects.bulk_create(through_objs)
+
 
 
 def clear_doc_entries(json_dict):

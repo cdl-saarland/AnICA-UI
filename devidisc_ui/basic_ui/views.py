@@ -10,12 +10,12 @@ from pathlib import Path
 import django_tables2 as tables
 from markdown import markdown
 
-from devidisc.abstractblock import AbstractBlock
 from devidisc.abstractioncontext import AbstractionContext
 from devidisc.configurable import config_diff
 
 from .models import Campaign, Discovery
 from .custom_pretty_printing import prettify_absblock, prettify_seconds, prettify_config_diff, prettify_abstraction_config
+from .helpers import load_abstract_block
 
 from .plots import make_discoveries_per_batch_plot, make_interestingness_histogramm_plot
 
@@ -42,20 +42,6 @@ def get_docs(site_name):
     # CACHE.set(site_name, res)
 
     return res
-
-
-def load_abstract_block(json_dict, actx):
-    if actx is None:
-        config_dict = json_dict['config']
-        config_dict['predmanager'] = None # we don't need that one here
-        actx = AbstractionContext(config=config_dict)
-
-    # result_ref = json_dict['result_ref']
-
-    ab_dict = actx.json_ref_manager.resolve_json_references(json_dict['ab'])
-
-    ab = AbstractBlock.from_json_dict(actx, ab_dict)
-    return ab#, result_ref
 
 
 campaign_table_attrs = {"class": "campaigntable"}
