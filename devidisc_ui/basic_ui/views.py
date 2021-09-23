@@ -48,7 +48,7 @@ campaign_table_attrs = {"class": "campaigntable"}
 
 class CampaignTable(tables.Table):
     campaign_id = tables.Column(
-            linkify=(lambda value: django.urls.reverse('basic_ui:campaign', kwargs={'campaign_id': value})),
+            linkify=(lambda value: django.urls.reverse('basic_ui:single_campaign', kwargs={'campaign_id': value})),
             attrs={"td": campaign_table_attrs, "th": campaign_table_attrs},
             verbose_name="Campaign ID")
     date = tables.Column(attrs={"td": campaign_table_attrs, "th": campaign_table_attrs},
@@ -75,7 +75,7 @@ class CampaignTable(tables.Table):
         row_attrs = campaign_table_attrs
 
 
-def all_campaigns(request):
+def all_campaigns_view(request):
     topbarpathlist = [
             ('all campaigns', django.urls.reverse('basic_ui:all_campaigns')),
         ]
@@ -146,7 +146,7 @@ def all_campaigns(request):
 
 
 
-def campaign(request, campaign_id):
+def single_campaign_view(request, campaign_id):
     campaign_obj = get_object_or_404(Campaign, pk=campaign_id)
 
     # get the batch-independent information
@@ -184,7 +184,7 @@ def campaign(request, campaign_id):
 
     topbarpathlist = [
             ('all campaigns', django.urls.reverse('basic_ui:all_campaigns')),
-            (f'campaign {campaign_id}', django.urls.reverse('basic_ui:campaign', kwargs={'campaign_id': campaign_id})),
+            (f'campaign {campaign_id}', django.urls.reverse('basic_ui:single_campaign', kwargs={'campaign_id': campaign_id})),
         ]
 
     # create plots
@@ -233,7 +233,7 @@ discovery_table_attrs = {"class": "discoverytable"}
 
 class DiscoveryTable(tables.Table):
     identifier = tables.Column(
-            linkify=(lambda value, record: django.urls.reverse('basic_ui:discovery', kwargs={'campaign_id': record.batch.campaign.id, 'discovery_id': value})),
+            linkify=(lambda value, record: django.urls.reverse('basic_ui:single_discovery', kwargs={'campaign_id': record.batch.campaign.id, 'discovery_id': value})),
             attrs={"td": discovery_table_attrs, "th": discovery_table_attrs},
             verbose_name="Discovery ID",
             )
@@ -270,14 +270,14 @@ class DiscoveryTable(tables.Table):
         return "{:.2f}".format(value)
 
 
-def all_discoveries(request, campaign_id):
+def all_discoveries_view(request, campaign_id):
     table = DiscoveryTable(Discovery.objects.filter(batch__campaign_id=campaign_id))
 
     tables.RequestConfig(request).configure(table)
 
     topbarpathlist = [
             ('all campaigns', django.urls.reverse('basic_ui:all_campaigns')),
-            (f'campaign {campaign_id}', django.urls.reverse('basic_ui:campaign', kwargs={'campaign_id': campaign_id})),
+            (f'campaign {campaign_id}', django.urls.reverse('basic_ui:single_campaign', kwargs={'campaign_id': campaign_id})),
             ('all discoveries', django.urls.reverse('basic_ui:all_discoveries', kwargs={'campaign_id': campaign_id})),
         ]
 
@@ -291,7 +291,7 @@ def all_discoveries(request, campaign_id):
     return render(request, "basic_ui/data_table.html", context)
 
 
-def discovery(request, campaign_id, discovery_id):
+def single_discovery_view(request, campaign_id, discovery_id):
     discovery_obj = get_object_or_404(Discovery, batch__campaign_id=campaign_id, identifier=discovery_id)
 
     absblock = load_abstract_block(discovery_obj.absblock, None)
@@ -306,9 +306,9 @@ def discovery(request, campaign_id, discovery_id):
 
     topbarpathlist = [
             ('all campaigns', django.urls.reverse('basic_ui:all_campaigns')),
-            (f'campaign {campaign_id}', django.urls.reverse('basic_ui:campaign', kwargs={'campaign_id': campaign_id})),
+            (f'campaign {campaign_id}', django.urls.reverse('basic_ui:single_campaign', kwargs={'campaign_id': campaign_id})),
             ('all discoveries', django.urls.reverse('basic_ui:all_discoveries', kwargs={'campaign_id': campaign_id})),
-            (f'discovery {discovery_id}', django.urls.reverse('basic_ui:discovery', kwargs={'campaign_id': campaign_id, 'discovery_id': discovery_id}))
+            (f'discovery {discovery_id}', django.urls.reverse('basic_ui:single_discovery', kwargs={'campaign_id': campaign_id, 'discovery_id': discovery_id}))
         ]
 
     context = {
@@ -328,7 +328,7 @@ insnscheme_table_attrs = {"class": "insnschemetable"}
 
 class InsnSchemeTable(tables.Table):
     text = tables.Column(
-            linkify=(lambda value, record: django.urls.reverse('basic_ui:insnscheme', kwargs={'campaign_id': record.campaign_id, 'ischeme_id': record.id})),
+            linkify=(lambda value, record: django.urls.reverse('basic_ui:single_insnscheme', kwargs={'campaign_id': record.campaign_id, 'ischeme_id': record.id})),
             attrs={"td": insnscheme_table_attrs, "th": insnscheme_table_attrs},
             verbose_name="InsnScheme",
         )
@@ -344,7 +344,7 @@ class InsnSchemeTable(tables.Table):
         attrs = insnscheme_table_attrs
 
 
-def all_insnschemes(request, campaign_id):
+def all_insnschemes_view(request, campaign_id):
     insnscheme_objs = InsnScheme.objects.filter(discovery__batch__campaign_id=campaign_id).distinct().order_by('text')
 
     extra_cols = []
@@ -372,7 +372,7 @@ def all_insnschemes(request, campaign_id):
 
     topbarpathlist = [
             ('all campaigns', django.urls.reverse('basic_ui:all_campaigns')),
-            (f'campaign {campaign_id}', django.urls.reverse('basic_ui:campaign', kwargs={'campaign_id': campaign_id})),
+            (f'campaign {campaign_id}', django.urls.reverse('basic_ui:single_campaign', kwargs={'campaign_id': campaign_id})),
             ('all InsnSchemes', django.urls.reverse('basic_ui:all_insnschemes', kwargs={'campaign_id': campaign_id})),
         ]
 
@@ -386,7 +386,7 @@ def all_insnschemes(request, campaign_id):
     return render(request, "basic_ui/data_table.html", context)
 
 
-def discoveries_for_insnscheme(request, campaign_id, ischeme_id):
+def single_insnscheme_view(request, campaign_id, ischeme_id):
     ischeme_obj = get_object_or_404(InsnScheme, pk=ischeme_id)
 
     discoveries = ischeme_obj.discovery_set.filter(batch__campaign_id=campaign_id)
@@ -397,9 +397,9 @@ def discoveries_for_insnscheme(request, campaign_id, ischeme_id):
 
     topbarpathlist = [
             ('all campaigns', django.urls.reverse('basic_ui:all_campaigns')),
-            (f'campaign {campaign_id}', django.urls.reverse('basic_ui:campaign', kwargs={'campaign_id': campaign_id})),
+            (f'campaign {campaign_id}', django.urls.reverse('basic_ui:single_campaign', kwargs={'campaign_id': campaign_id})),
             ('all InsnSchemes', django.urls.reverse('basic_ui:all_insnschemes', kwargs={'campaign_id': campaign_id})),
-            (f'InsnScheme \'{ischeme_obj.text}\'', django.urls.reverse('basic_ui:insnscheme', kwargs={'campaign_id': campaign_id, 'ischeme_id': ischeme_id})),
+            (f'InsnScheme \'{ischeme_obj.text}\'', django.urls.reverse('basic_ui:single_insnscheme', kwargs={'campaign_id': campaign_id, 'ischeme_id': ischeme_id})),
         ]
 
     context = {
