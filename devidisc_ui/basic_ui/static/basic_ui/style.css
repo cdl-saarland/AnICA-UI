@@ -1,18 +1,37 @@
 
 :root {
-    /* color variables to use throughout the stylesheet*/
     --main-bg: #eee;
+    --help-bg: #eee;
     --content-bg: #ddd;
     --topbar-bg: #333;
     --help-border: #ccc;
     --table-bg: #ccc;
+    --table-fg: black;
     --table-border: #999;
     --link-weak: black;
     --explscheme-col: white;
+    --font: serif;
 }
+
+/* UdS mode*/
+/* :root { */
+/*     --main-bg: #eee; */
+/*     --content-bg: #e6e6e6; */
+/*     --topbar-bg: #004877; */
+/*     --help-bg: #e6e6e6; */
+/*     --help-border: #01283f; */
+/*     --table-bg: #004877; */
+/*     --table-fg: #e6e6e6; */
+/*     --table-border: #01283f; */
+/*     --link-weak: #01283f; */
+/*     --explscheme-col: white; */
+/*     --font: Arial, "Helvetica Neue", Helvetica, "Liberation Sans", sans-serif; */
+/* } */
+
 
 body {
     font-size: 100%;
+    font-family: var(--font);
     background-color: var(--main-bg);
 }
 
@@ -65,7 +84,7 @@ body {
     display: none;
     z-index: 1100;
     position: fixed;
-    background-color: var(--main-bg);
+    background-color: var(--help-bg);
     overflow: scroll;
 
     padding-top: 10px;
@@ -120,6 +139,7 @@ td.campaigntable, th.campaigntable {
 
 th.campaigntable {
     background-color: var(--table-bg);
+    color: var(--table-fg);
 }
 
 td.discoverytable, th.discoverytable {
@@ -129,6 +149,7 @@ td.discoverytable, th.discoverytable {
 
 th.discoverytable {
     background-color: var(--table-bg);
+    color: var(--table-fg);
 }
 
 table.discoverytable, th.discoverytable, td.discoverytable {
@@ -143,6 +164,7 @@ td.insnschemetable, th.insnschemetable {
 
 th.insnschemetable {
     background-color: var(--table-bg);
+    color: var(--table-fg);
 }
 
 table.insnschemetable, th.insnschemetable, td.insnschemetable {
@@ -167,7 +189,7 @@ ul.pagination {
 
 /* prettier link formatting */
 th > a {
-    color: var(--link-weak);
+    color: var(--table-fg);
     font-weight: bold;
     text-decoration: none;
 }
