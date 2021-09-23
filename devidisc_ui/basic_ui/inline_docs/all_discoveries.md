@@ -31,6 +31,10 @@ The higher this ratio, the more general is this abstract block.
 The geometric mean of the interestingnesses of a group of blocks sampled from the represented concrete basic blocks of this abstract block.
 The higher this value, the more dramatic is the deviation between the tools under investigation (may be infinite if at least one of the tools crashes).
 
+#### Generality
+The minimum number of instruction schemes represented by an abstract instruction of the abstract block.
+The larger this is, the more basic blocks are characterized as interesting by this discovery.
+
 #### Witness Length
 The length of the witness for the generalization of this discovery.
 The larger this is, the more generalization steps were used for this discovery.

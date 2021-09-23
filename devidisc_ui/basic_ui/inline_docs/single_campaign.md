@@ -34,8 +34,9 @@ This section shows a number of metrics for the discovery campaign:
     This is the number of batches that were investigated during the campaign.
   - discoveries made: The number of discoveries, i.e. non-subsuming interesting abstract basic blocks, made during the discovery campaign.
   - discoveries per batch: The average (arithmetic mean) number of discoveries per batch.
-  - avg witness length: The average length of witnesses over all discoveries of the campaign.
-  - avg number of instructions: The average number of abstract instructions over all discoveries of the campaign.
+  - average generality: The average over the minimal numbers of instruction schemes represented by any abstract instruction of the abstract blocks (i.e. avg({min({len(absinsn.representedSchemes) for absinsn in discovery}) for discovery in Campaign})).
+  - average witness length: The average length of witnesses over all discoveries of the campaign.
+  - average number of instructions: The average number of abstract instructions over all discoveries of the campaign.
   - time spent: The time that passed while performing the campaign.
 
 ### Plots
@@ -44,6 +45,7 @@ For a more detailed overview, this section displays plots concerning the entire 
 
   - Discoveries per Batch: This graph shows the number of discoveries (vertical axis) for each batch in the campaign (horizontal axis).
   The batches are indexed by the order in which they are investigated in the campaign.
+  - Generality of Discoveries: This is a histrogram showing the distribution of generality values in the discoveries of this campaign.
 
 
 ### Detailed Results:

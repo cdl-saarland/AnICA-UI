@@ -42,9 +42,12 @@
     </table>
 
     <h3>Plots:</h3>
-    <div class="imagecontainer">
-        <img src='data:image/png;base64,{{ discoveries_per_batch_plot }}'>
-    </div>
+
+    {% for plot in plots %}
+        <div class="imagecontainer">
+            <img src='data:image/png;base64,{{ plot }}'>
+        </div>
+    {% endfor %}
 
     <h3>Detailed Results:</h3>
         <ul>

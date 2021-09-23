@@ -65,3 +65,19 @@ def make_interestingness_histogramm_plot(measurements):
     ax.yaxis.set_major_locator(MaxNLocator(integer=True))
 
     return encode_plot(fig)
+
+
+def make_generality_histogramm_plot(discoveries):
+    entries = [ d.generality for d in discoveries ]
+
+    fig, ax = plt.subplots(figsize=(10,4))
+    ax.hist(entries)
+
+    ax.set_title('Generality of Discoveries')
+    ax.set_ylabel("# Occurrences")
+    ax.set_xlabel("Generality")
+    ax.grid(linestyle="--", linewidth=0.5, color='.25', zorder=-10)
+
+    ax.yaxis.set_major_locator(MaxNLocator(integer=True))
+
+    return encode_plot(fig)

@@ -80,7 +80,7 @@ def main():
                 ints.append(actx.interestingness_metric.compute_interestingness(eval_res))
 
             if len(ints) == 0 or any(map(lambda x: not math.isfinite(x), ints)) or any(map(lambda x: x <= 0, ints)):
-                mean_interestingness = 42
+                mean_interestingness = math.inf
             else:
                 mean_interestingness = geometric_mean(ints)
 

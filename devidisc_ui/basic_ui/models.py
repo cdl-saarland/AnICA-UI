@@ -3,6 +3,7 @@ from django.utils.dateparse import parse_datetime
 
 from collections import defaultdict
 import json
+import math
 from pathlib import Path
 
 from devidisc.configurable import load_json_config
@@ -62,6 +63,7 @@ class Discovery(models.Model):
     witness_len = models.IntegerField()
     interestingness = models.FloatField()
     ab_coverage = models.FloatField()
+    generality = models.IntegerField()
     occurring_insnschemes = models.ManyToManyField(InsnScheme)
 
     def __str__(self):
@@ -158,8 +160,10 @@ def import_campaign(campaign_dir):
                 if actx is None:
                     actx = ab.actx
 
+                generality = math.inf
                 for ai in ab.abs_insns:
                     feasible_schemes = actx.insn_feature_manager.compute_feasible_schemes(ai.features)
+                    generality = min(generality, len(feasible_schemes))
                     for istr in map(str, feasible_schemes):
                         used_ischemes.add(istr)
                         ischeme_map[gen_id].add(istr)
@@ -180,6 +184,7 @@ def import_campaign(campaign_dir):
                         witness_len = witness_len,
                         interestingness = mean_interestingness,
                         ab_coverage = ab_coverage,
+                        generality = generality,
                     ))
     Discovery.objects.bulk_create(discovery_objs)
 

@@ -17,7 +17,7 @@ from .models import Campaign, Discovery, InsnScheme
 from .custom_pretty_printing import prettify_absblock, prettify_seconds, prettify_config_diff, prettify_abstraction_config
 from .helpers import load_abstract_block
 
-from .plots import make_discoveries_per_batch_plot, make_interestingness_histogramm_plot
+from .plots import *
 
 def get_docs(site_name):
     # cached = CACHE.get(site_name, None)
@@ -187,18 +187,17 @@ def single_campaign_view(request, campaign_id):
             (f'campaign {campaign_id}', django.urls.reverse('basic_ui:single_campaign', kwargs={'campaign_id': campaign_id})),
         ]
 
-    # create plots
-    discoveries_per_batch_plot = make_discoveries_per_batch_plot(batches)
-
     if num_discoveries == 0:
         avg_witness_length = None
         avg_num_insns = None
+        avg_generality = None
     else:
         witness_lengths = 0
         num_insns = 0
-        agg = relevant_discoveries.aggregate(Avg('witness_len'), Avg('num_insns'))
+        agg = relevant_discoveries.aggregate(Avg('witness_len'), Avg('num_insns'), Avg('generality'))
         avg_witness_length = '{:.2f}'.format(agg['witness_len__avg'])
         avg_num_insns = '{:.2f}'.format(agg['num_insns__avg'])
+        avg_generality = '{:.2f}'.format(agg['generality__avg'])
 
     discoveries_per_batch = None if num_batches == 0 else '{:.2f}'.format(num_discoveries / num_batches)
 
@@ -206,9 +205,15 @@ def single_campaign_view(request, campaign_id):
             ('batches run', num_batches),
             ('discoveries made', num_discoveries),
             ('discoveries per batch', discoveries_per_batch),
-            ('avg witness length', avg_witness_length),
-            ('avg number of instructions', avg_num_insns),
+            ('average generality', avg_generality),
+            ('average witness length', avg_witness_length),
+            ('average number of instructions', avg_num_insns),
             ('time spent', time_spent),
+        ]
+
+    plots = [
+            make_discoveries_per_batch_plot(batches),
+            make_generality_histogramm_plot(relevant_discoveries),
         ]
 
     context = {
@@ -221,7 +226,7 @@ def single_campaign_view(request, campaign_id):
             'total_batches': total_batches,
 
             'stats': stats,
-            'discoveries_per_batch_plot': discoveries_per_batch_plot,
+            'plots': plots,
             'topbarpathlist': topbarpathlist,
         }
 
@@ -249,6 +254,9 @@ class DiscoveryTable(tables.Table):
     interestingness = tables.Column(
             attrs={"td": discovery_table_attrs, "th": discovery_table_attrs},
             verbose_name="Mean Interestingness")
+    generality = tables.Column(
+            attrs={"td": discovery_table_attrs, "th": discovery_table_attrs},
+            verbose_name="Generality")
     witness_len = tables.Column(
             attrs={"td": discovery_table_attrs, "th": discovery_table_attrs},
             verbose_name="Witness Length")
