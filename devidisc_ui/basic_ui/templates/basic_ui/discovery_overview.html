@@ -6,7 +6,7 @@
     <link rel="stylesheet" type="text/css" href="{% static 'basic_ui/tooltips.css' %}">
 {% endblock %}
 
-{% block title %}Discovery Overview{% endblock %}
+{% block title %}Single Discovery{% endblock %}
 
 {% block content %}
     <h3>Discovery:</h3>
@@ -17,24 +17,19 @@
 
     <h3>Metrics:</h3>
     <table>
-      <tr>
-        <td>geomean interestingness:</td>
-        <td>{{ mean_interestingness }}</td>
-      </tr>
-      <tr>
-        <td>sample coverage:</td>
-        <td>{{ ab_coverage }}</td>
-      </tr>
-      <tr>
-        <td>witness length:</td>
-        <td>{{ witness_length }}</td>
-      </tr>
+        {% for key, value in stats %}
+            <tr>
+                <td>{{key}}:</td><td>{{value}}</td>
+            </tr>
+        {% endfor %}
     </table>
 
     <h3>Plots:</h3>
-    <div class="imagecontainer">
-        <img src='data:image/png;base64,{{ interestingness_histogram }}'>
-    </div>
+    {% for plot in plots %}
+        <div class="imagecontainer">
+            <img src='data:image/png;base64,{{ plot }}'>
+        </div>
+    {% endfor %}
 
     <h3>Witness:</h3>
     TODO

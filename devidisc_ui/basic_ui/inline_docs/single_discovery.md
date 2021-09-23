@@ -19,6 +19,8 @@ This section contains metrics for the discovery:
     The higher this value, the more dramatic is the deviation between the tools under investigation (may be infinite if at least one of the tools crashes).
   - sample coverage: The (approximated) ratio of samples from the universe of basic blocks (with the same number of instructions as this abstract block) that are represented by this discovery.
     The higher this ratio, the more general is this abstract block.
+  - generality: The minimum number of instruction schemes represented by an abstract instruction of the abstract block.
+    The larger this is, the more basic blocks are characterized as interesting by this discovery.
   - witness length: The length of the witness for the generalization of this discovery.
     The larger this is, the more generalization steps were used for this discovery.
 

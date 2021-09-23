@@ -290,7 +290,7 @@ def all_discoveries_view(request, campaign_id):
         ]
 
     context = {
-            "title": "Discoveries",
+            "title": "All Discoveries",
             "table": table,
             'topbarpathlist': topbarpathlist,
         }
@@ -309,8 +309,18 @@ def single_discovery_view(request, campaign_id, discovery_id):
     mean_interestingness = discovery_obj.interestingness
     ab_coverage = discovery_obj.ab_coverage
     witness_length = discovery_obj.witness_len
+    generality = discovery_obj.generality
 
-    plot = make_interestingness_histogramm_plot(list(discovery_obj.measurement_set.all()))
+    stats = [
+            ('geomean interestingness', mean_interestingness),
+            ('sample coverage', ab_coverage),
+            ('generality', generality),
+            ('witness length', witness_length),
+        ]
+
+    plots = [
+            make_interestingness_histogramm_plot(list(discovery_obj.measurement_set.all())),
+        ]
 
     topbarpathlist = [
             ('all campaigns', django.urls.reverse('basic_ui:all_campaigns')),
@@ -322,10 +332,9 @@ def single_discovery_view(request, campaign_id, discovery_id):
     context = {
             'absblock': absblock_html,
             'topbarpathlist': topbarpathlist,
-            'mean_interestingness': mean_interestingness,
-            'ab_coverage': ab_coverage,
-            'witness_length': witness_length,
-            'interestingness_histogram': plot,
+
+            'stats': stats,
+            'plots': plots,
         }
     context.update(get_docs('single_discovery'))
 
@@ -385,7 +394,7 @@ def all_insnschemes_view(request, campaign_id):
         ]
 
     context = {
-            "title": "InsnSchemes",
+            "title": "All InsnSchemes",
             "table": table,
             'topbarpathlist': topbarpathlist,
         }
@@ -411,7 +420,7 @@ def single_insnscheme_view(request, campaign_id, ischeme_id):
         ]
 
     context = {
-            "title": "Discoveries connected to an InsnScheme ",
+            "title": "Single InsnScheme",
             "table": table,
             'topbarpathlist': topbarpathlist,
         }
