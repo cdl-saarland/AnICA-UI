@@ -157,13 +157,37 @@ def single_campaign_view(request, campaign_id):
     all_batches = campaign_obj.discoverybatch_set.all().order_by('batch_index')
     total_batches = all_batches.count()
 
+    # Check whether we should make this view comparable with a different one
+    # (i.e. make sure that all plot axes are the same and we use a common
+    # prefix if not explicitly specified otherwise.)
+    cmp_campaign_id = request.GET.get('compare_with', None)
+
+    cmp_campaign_obj = None
+    batch_pos_pre = total_batches
+
+    if cmp_campaign_id is not None:
+        try:
+            cmp_campaign_id = int(cmp_campaign_id)
+            cmp_campaign_obj = Campaign.objects.get(pk=cmp_campaign_id)
+        except (ValueError, Campaign.DoesNotExist):
+            raise Http404(f"Campaign {cmp_campaign_id} could not be found for comparison.")
+        all_cmp_batches = cmp_campaign_obj.discoverybatch_set.all().order_by('batch_index')
+        # total_cmp_batches = all_cmp_batches.count()
+        # batch_pos_pre = min(total_cmp_batches, total_batches)
+
     # get the number of batches that we should use for this display
-    batch_pos_str = request.GET.get('batch_pos', total_batches)
+    batch_pos_str = request.GET.get('batch_pos', None)
+
+    if batch_pos_str is None:
+        batch_pos_explicitly_set = False
+        batch_pos_str = batch_pos_pre
+    else:
+        batch_pos_explicitly_set = True
 
     try:
         batch_pos = int(batch_pos_str)
     except ValueError:
-        batch_pos = total_batches
+        batch_pos = batch_pos_pre
 
     # make sure that the position is in bounds
     if batch_pos <= 0:
@@ -173,6 +197,16 @@ def single_campaign_view(request, campaign_id):
 
     # restrict to the first batch_pos batches
     batches = all_batches[:batch_pos]
+
+    cmp_batches = None
+    cmp_discoveries = None
+    if cmp_campaign_obj is not None:
+        if batch_pos_explicitly_set:
+            cmp_batches = all_cmp_batches[:batch_pos]
+            cmp_discoveries = Discovery.objects.filter(batch__campaign=cmp_campaign_obj, batch__batch_index__range=(0, batch_pos-1))
+        else:
+            cmp_batches = all_cmp_batches
+            cmp_discoveries = Discovery.objects.filter(batch__campaign=cmp_campaign_obj)
 
     num_batches = batch_pos
 
@@ -212,8 +246,8 @@ def single_campaign_view(request, campaign_id):
         ]
 
     plots = [
-            make_discoveries_per_batch_plot(batches),
-            make_generality_histogramm_plot(relevant_discoveries),
+            make_discoveries_per_batch_plot(batches, cmp_batches),
+            make_generality_histogramm_plot(relevant_discoveries, cmp_discoveries),
         ]
 
     context = {
@@ -221,6 +255,9 @@ def single_campaign_view(request, campaign_id):
             'tool_list': tool_list,
             'termination_condition': termination_condition,
             'abstraction_config': cfg_str,
+
+            'is_comparing': cmp_campaign_obj is not None,
+            'cmp_campaign_id': cmp_campaign_id,
 
             'batch_pos': batch_pos,
             'total_batches': total_batches,

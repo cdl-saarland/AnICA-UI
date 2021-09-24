@@ -49,6 +49,15 @@
         </div>
     {% endfor %}
 
+    The plots are currently{% if is_comparing %} scaled to be comparable with campaign {{ cmp_campaign_id }}{% else %} not scaled for comparison{% endif %}.<br>
+
+    To change compare with campaign <input type="number" id="new_cmp_campaign" min="1", max="1000" value="1"> instead, click here: <button id="change_cmp_campaign" onclick="change_cmp_campaign()">change comparison</button> <br>
+
+    {% if is_comparing %}
+    To clear this, click here: <button id="clear_cmp_campaign" onclick="clear_cmp_campaign()">clear comparison</button>
+    {% endif %}
+
+
     <h3>Detailed Results:</h3>
         <ul>
             <li><a href="{% url 'basic_ui:all_discoveries' campaign.id %}">All Discoveries</a></li>
@@ -62,8 +71,29 @@
     <script type="text/javascript">
         function change_prefix() {
             const new_batch_pos = document.getElementById("new_batch_pos").value;
-            const current_url = window.location.href.split('?')[0];
-            window.location.replace(current_url + '?batch_pos=' + new_batch_pos)
+
+            if ('URLSearchParams' in window) {
+                var searchParams = new URLSearchParams(window.location.search);
+                searchParams.set("batch_pos", "" + new_batch_pos);
+                window.location.search = searchParams.toString();
+            }
+        }
+
+        function clear_cmp_campaign() {
+            if ('URLSearchParams' in window) {
+                var searchParams = new URLSearchParams(window.location.search);
+                searchParams.delete("compare_with");
+                window.location.search = searchParams.toString();
+            }
+        }
+        function change_cmp_campaign() {
+            const new_cmp_campaign = document.getElementById("new_cmp_campaign").value;
+
+            if ('URLSearchParams' in window) {
+                var searchParams = new URLSearchParams(window.location.search);
+                searchParams.set("compare_with", "" + new_cmp_campaign);
+                window.location.search = searchParams.toString();
+            }
         }
     </script>
 {% endblock %}

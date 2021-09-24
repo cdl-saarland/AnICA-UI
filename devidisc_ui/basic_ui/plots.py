@@ -11,6 +11,8 @@ The idea for this comes from this page:
 
 import math
 
+import numpy as np
+
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -25,11 +27,20 @@ def encode_plot(fig):
     return b64
 
 
-def make_discoveries_per_batch_plot(batches):
+def make_discoveries_per_batch_plot(batches, cmp_batches=None):
     objs = batches
 
-    batch_idx = list(range(0, len(objs)))
+    xlimit = len(objs)
+
+    batch_idx = list(range(0, xlimit))
     counts = [x.discovery_set.count() for x in objs]
+
+    ylimit = max(counts)
+
+    if cmp_batches is not None:
+        max_cmp_count = max((x.discovery_set.count() for x in cmp_batches))
+        ylimit = max(ylimit, max_cmp_count)
+        xlimit = max(xlimit, len(cmp_batches))
 
     fig, ax = plt.subplots(figsize=(10,4))
     ax.plot(batch_idx, counts, '--bo')
@@ -37,9 +48,59 @@ def make_discoveries_per_batch_plot(batches):
     ax.set_title('Discoveries per Batch')
     ax.set_ylabel("# Discoveries")
     ax.set_xlabel("Batch Index")
+
+    xmargin = max(xlimit * 0.05, 5)
+    ymargin = max(ylimit * 0.05, 1)
+    ax.set_xlim(-xmargin, xlimit + xmargin)
+    ax.set_ylim(-ymargin, ylimit + ymargin)
+
     ax.grid(linestyle="--", linewidth=0.5, color='.25', zorder=-10)
 
     ax.yaxis.set_major_locator(MaxNLocator(integer=True))
+
+    return encode_plot(fig)
+
+def make_generality_histogramm_plot(discoveries, cmp_discoveries=None):
+    num_bins = 16
+
+    entries = [ d.generality for d in discoveries ]
+
+    xlimit = max(entries)
+    ylimit = len(entries)
+
+    if cmp_discoveries is not None:
+        cmp_entries = [ d.generality for d in cmp_discoveries ]
+        xlimit = max(xlimit, max(cmp_entries))
+        ylimit = max(ylimit, len(cmp_entries))
+
+    xmargin = xlimit * 0.05
+    ymargin = ylimit * 0.05
+
+    fig, ax = plt.subplots(figsize=(10,6))
+    counts, bins, patches = ax.hist(entries, bins=num_bins, range=(0, xlimit))
+
+    ax.set_title('Generality of Discoveries')
+    ax.set_ylabel("# Occurrences")
+    ax.set_xlabel("Generality")
+
+    ax.set_xlim(-xmargin, xlimit + xmargin)
+    ax.set_ylim(-ymargin, ylimit + ymargin)
+
+    ax.grid(linestyle="--", linewidth=0.5, color='.25', zorder=-10)
+
+    ax.set_xticks(bins)
+    ax.yaxis.set_major_locator(MaxNLocator(integer=True))
+
+    # Label the raw counts below the x-axis...
+    # ajusted from https://stackoverflow.com/a/6353051
+    bin_centers = 0.5 * np.diff(bins) + bins[:-1]
+    for count, x in zip(counts, bin_centers):
+        # Label the raw counts
+        ax.annotate("{:.0f}".format(count), xy=(x, 0), xycoords=('data', 'axes fraction'),
+            xytext=(0, -18), textcoords='offset points', va='top', ha='center')
+
+    fig.subplots_adjust(bottom=0.15)
+    ax.xaxis.labelpad = 26
 
     return encode_plot(fig)
 
@@ -67,17 +128,3 @@ def make_interestingness_histogramm_plot(measurements):
     return encode_plot(fig)
 
 
-def make_generality_histogramm_plot(discoveries):
-    entries = [ d.generality for d in discoveries ]
-
-    fig, ax = plt.subplots(figsize=(10,4))
-    ax.hist(entries)
-
-    ax.set_title('Generality of Discoveries')
-    ax.set_ylabel("# Occurrences")
-    ax.set_xlabel("Generality")
-    ax.grid(linestyle="--", linewidth=0.5, color='.25', zorder=-10)
-
-    ax.yaxis.set_major_locator(MaxNLocator(integer=True))
-
-    return encode_plot(fig)

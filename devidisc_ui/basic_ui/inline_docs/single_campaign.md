@@ -47,6 +47,11 @@ For a more detailed overview, this section displays plots concerning the entire 
   The batches are indexed by the order in which they are investigated in the campaign.
   - Generality of Discoveries: This is a histrogram showing the distribution of generality values in the discoveries of this campaign.
 
+By default, the axis scales of plots for different campaigns may differ, which makes a comparison difficult.
+To do comparisons between campaigns, there are controls between the plots that allow to specify a campaign with which the current campaign view should be made comparable with.
+
+If a comparison campaign Y is set on the single campaign view for a campaign X and on a single campaign view for campaign Y, campaign X is set for comparison, the scales of the plots will be the same on both views.
+If a batch prefix is specified, it should be specified in both views explicitly so that the scales are adjusted accordingly.
 
 ### Detailed Results:
   - All Discoveries: This is a link to a list of all discoveries made in this campaign.
