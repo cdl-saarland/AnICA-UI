@@ -27,7 +27,7 @@ def encode_plot(fig):
     return b64
 
 
-def make_discoveries_per_batch_plot(batches, cmp_batches=None):
+def make_discoveries_per_batch_plot(batches, cmp_batches=[]):
     objs = batches
 
     xlimit = len(objs)
@@ -37,10 +37,10 @@ def make_discoveries_per_batch_plot(batches, cmp_batches=None):
 
     ylimit = max(counts)
 
-    if cmp_batches is not None:
-        max_cmp_count = max((x.discovery_set.count() for x in cmp_batches))
+    for inner_cmp_batches in cmp_batches:
+        max_cmp_count = max((x.discovery_set.count() for x in inner_cmp_batches))
         ylimit = max(ylimit, max_cmp_count)
-        xlimit = max(xlimit, len(cmp_batches))
+        xlimit = max(xlimit, len(inner_cmp_batches))
 
     fig, ax = plt.subplots(figsize=(10,4))
     ax.plot(batch_idx, counts, '--bo')
@@ -60,7 +60,7 @@ def make_discoveries_per_batch_plot(batches, cmp_batches=None):
 
     return encode_plot(fig)
 
-def make_generality_histogramm_plot(discoveries, cmp_discoveries=None):
+def make_generality_histogramm_plot(discoveries, cmp_discoveries=[]):
     num_bins = 16
 
     entries = [ d.generality for d in discoveries ]
@@ -68,8 +68,8 @@ def make_generality_histogramm_plot(discoveries, cmp_discoveries=None):
     xlimit = max(entries)
     ylimit = len(entries)
 
-    if cmp_discoveries is not None:
-        cmp_entries = [ d.generality for d in cmp_discoveries ]
+    for inner_cmp_discoveries in cmp_discoveries:
+        cmp_entries = [ d.generality for d in inner_cmp_discoveries ]
         xlimit = max(xlimit, max(cmp_entries))
         ylimit = max(ylimit, len(cmp_entries))
 

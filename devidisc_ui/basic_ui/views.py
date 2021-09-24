@@ -142,7 +142,7 @@ def all_campaigns_view(request):
 
     context.update(get_docs('all_campaigns'))
 
-    return render(request, "basic_ui/data_table.html",  context)
+    return render(request, "basic_ui/all_campaigns.html",  context)
 
 
 
@@ -160,20 +160,23 @@ def single_campaign_view(request, campaign_id):
     # Check whether we should make this view comparable with a different one
     # (i.e. make sure that all plot axes are the same and we use a common
     # prefix if not explicitly specified otherwise.)
-    cmp_campaign_id = request.GET.get('compare_with', None)
+    cmp_campaign_id_str = request.GET.get('compare_with', None)
 
-    cmp_campaign_obj = None
+    cmp_campaign_objs = []
+    all_cmp_batches = []
+
+    if cmp_campaign_id_str is not None:
+        cmp_campaign_ids = cmp_campaign_id_str.split(',')
+        for cmp_campaign_id in cmp_campaign_ids:
+            try:
+                cmp_campaign_id = int(cmp_campaign_id)
+                curr_cmp_campaign_obj = Campaign.objects.get(pk=cmp_campaign_id)
+                cmp_campaign_objs.append(curr_cmp_campaign_obj)
+            except (ValueError, Campaign.DoesNotExist):
+                raise Http404(f"Campaign {cmp_campaign_id} could not be found for comparison.")
+            all_cmp_batches.append(curr_cmp_campaign_obj.discoverybatch_set.all().order_by('batch_index'))
+
     batch_pos_pre = total_batches
-
-    if cmp_campaign_id is not None:
-        try:
-            cmp_campaign_id = int(cmp_campaign_id)
-            cmp_campaign_obj = Campaign.objects.get(pk=cmp_campaign_id)
-        except (ValueError, Campaign.DoesNotExist):
-            raise Http404(f"Campaign {cmp_campaign_id} could not be found for comparison.")
-        all_cmp_batches = cmp_campaign_obj.discoverybatch_set.all().order_by('batch_index')
-        # total_cmp_batches = all_cmp_batches.count()
-        # batch_pos_pre = min(total_cmp_batches, total_batches)
 
     # get the number of batches that we should use for this display
     batch_pos_str = request.GET.get('batch_pos', None)
@@ -184,10 +187,13 @@ def single_campaign_view(request, campaign_id):
     else:
         batch_pos_explicitly_set = True
 
-    try:
-        batch_pos = int(batch_pos_str)
-    except ValueError:
-        batch_pos = batch_pos_pre
+    if batch_pos_str == 'min':
+        batch_pos = min(batch_pos_pre, *map(lambda x: x.count(), all_cmp_batches))
+    else:
+        try:
+            batch_pos = int(batch_pos_str)
+        except ValueError:
+            batch_pos = batch_pos_pre
 
     # make sure that the position is in bounds
     if batch_pos <= 0:
@@ -198,15 +204,15 @@ def single_campaign_view(request, campaign_id):
     # restrict to the first batch_pos batches
     batches = all_batches[:batch_pos]
 
-    cmp_batches = None
-    cmp_discoveries = None
-    if cmp_campaign_obj is not None:
+    cmp_batches = []
+    cmp_discoveries = []
+    for cmp_batch, cmp_campaign_obj in zip(all_cmp_batches, cmp_campaign_objs):
         if batch_pos_explicitly_set:
-            cmp_batches = all_cmp_batches[:batch_pos]
-            cmp_discoveries = Discovery.objects.filter(batch__campaign=cmp_campaign_obj, batch__batch_index__range=(0, batch_pos-1))
+            cmp_batches.append(cmp_batch[:batch_pos])
+            cmp_discoveries.append(Discovery.objects.filter(batch__campaign=cmp_campaign_obj, batch__batch_index__range=(0, batch_pos-1)))
         else:
-            cmp_batches = all_cmp_batches
-            cmp_discoveries = Discovery.objects.filter(batch__campaign=cmp_campaign_obj)
+            cmp_batches.append(cmp_batch)
+            cmp_discoveries.append(Discovery.objects.filter(batch__campaign=cmp_campaign_obj))
 
     num_batches = batch_pos
 
@@ -256,8 +262,8 @@ def single_campaign_view(request, campaign_id):
             'termination_condition': termination_condition,
             'abstraction_config': cfg_str,
 
-            'is_comparing': cmp_campaign_obj is not None,
-            'cmp_campaign_id': cmp_campaign_id,
+            'is_comparing': len(cmp_campaign_objs) > 0,
+            'cmp_campaign_ids': ", ".join(map(lambda x: str(x.pk), cmp_campaign_objs)),
 
             'batch_pos': batch_pos,
             'total_batches': total_batches,

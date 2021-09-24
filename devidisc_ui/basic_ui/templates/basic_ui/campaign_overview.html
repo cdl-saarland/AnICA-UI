@@ -49,7 +49,7 @@
         </div>
     {% endfor %}
 
-    The plots are currently{% if is_comparing %} scaled to be comparable with campaign {{ cmp_campaign_id }}{% else %} not scaled for comparison{% endif %}.<br>
+    The plots are currently{% if is_comparing %} scaled to be comparable with campaign(s) {{ cmp_campaign_ids }}{% else %} not scaled for comparison{% endif %}.<br>
 
     To change compare with campaign <input type="number" id="new_cmp_campaign" min="1", max="1000" value="1"> instead, click here: <button id="change_cmp_campaign" onclick="change_cmp_campaign()">change comparison</button> <br>
 
