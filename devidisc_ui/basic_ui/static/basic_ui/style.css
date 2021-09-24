@@ -1,9 +1,12 @@
 
 :root {
-    --main-bg: #eee;
-    --help-bg: #eee;
+    --main-bg: #4c4c4c;
+    --help-bg: #333;
+    --help-fg: #eee;
+
     --content-bg: #ddd;
     --topbar-bg: #333;
+    --topbar-fg: #eee;
     --help-border: #ccc;
     --table-bg: #ccc;
     --table-fg: black;
@@ -11,6 +14,14 @@
     --link-weak: black;
     --explscheme-col: white;
     --font: serif;
+}
+
+@media (prefers-color-scheme: light) {
+    :root {
+        --main-bg: #eee;
+        --help-bg: #eee;
+        --help-fg: black;
+    }
 }
 
 /* UdS mode*/
@@ -54,7 +65,7 @@ body {
     margin-left: 10%;
     white-space: nowrap;
     font-size: 32px;
-    color: var(--main-bg);
+    color: var(--topbar-fg);
 }
 
 #topbarpath {
@@ -64,7 +75,7 @@ body {
 }
 
 #topbarpath > a {
-    color: var(--main-bg);
+    color: var(--topbar-fg);
     text-decoration: none;
 }
 
@@ -85,6 +96,7 @@ body {
     z-index: 1100;
     position: fixed;
     background-color: var(--help-bg);
+    color: var(--help-fg);
     overflow: scroll;
 
     padding-top: 10px;
