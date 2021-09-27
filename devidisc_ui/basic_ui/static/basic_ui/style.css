@@ -143,6 +143,11 @@ body {
   white-space: pre-line;
 }
 
+.code_comment {
+    user-select: none;
+    color: gray;
+    /* float: right; */
+}
 
 td.campaigntable, th.campaigntable {
     text-align: center;

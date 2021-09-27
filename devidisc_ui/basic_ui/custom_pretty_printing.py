@@ -25,11 +25,20 @@ def prettify_absinsn(absinsn, hl_feature=None, skip_top=False):
         res = '<ul class="absfeaturelist">' + res + "</ul>"
     return res
 
+def make_link(url, caption, is_relative=False):
+    prefix = ""
+    if not is_relative:
+        prefix = "https://"
+    link_frame = '<a href="{prefix}{url}" target="_blank" rel="noopener noreferrer">{caption}</a>'
+    return link_frame.format(prefix=prefix, url=url, caption=caption)
 
 def prettify_absblock(absblock, hl_expansion=None, skip_top=False, add_schemes=False):
+    actx = absblock.actx
+
     res = ""
     res += "<b>Abstract Instructions:</b>\n"
     res += "<table class=\"absinsn\">\n"
+
     for idx, ai in enumerate(absblock.abs_insns):
         res += "<tr class=\"absinsn\">"
         res += f"<th class=\"absinsn\">{idx}</th>\n"
@@ -40,7 +49,7 @@ def prettify_absblock(absblock, hl_expansion=None, skip_top=False, add_schemes=F
         insn_str = prettify_absinsn(ai, hl_feature, skip_top=skip_top)
         res += f"<td class=\"absinsn\">{insn_str}</td>"
 
-        feasible_schemes = absblock.actx.insn_feature_manager.compute_feasible_schemes(ai.features)
+        feasible_schemes = actx.insn_feature_manager.compute_feasible_schemes(ai.features)
         if not add_schemes:
             num_schemes = len(feasible_schemes)
             res += f"<td class=\"absinsn\">({num_schemes})</td>"
@@ -58,11 +67,32 @@ def prettify_absblock(absblock, hl_expansion=None, skip_top=False, add_schemes=F
             res += "<tr class=\"absinsn explicit_schemes\" id=\"{}\"><td class=\"absinsn\"></td><td class=\"absinsn\">".format(content_id)
             res += "<div class=\"explicit_schemes code indent_content\">"
 
-            strs = list(map(str, feasible_schemes))
+            # add clickable links to uops.info and felixcloutier.com where available
+            strs = []
+            for ischeme in feasible_schemes:
+                features = actx.iwho_ctx.get_features(ischeme)
+                ischeme_str = str(ischeme)
+                ann_insn_str = escape(ischeme_str)
+
+                num_indents = max(4, 52 - len(ischeme_str))
+                annotations = []
+                if features is not None and len(features) > 0:
+                    general_features = features[0]
+                    ref_url = general_features.get("ref_url", None)
+                    if ref_url is not None:
+                        annotations.append(make_link(url=ref_url, caption="ref"))
+                    uops_info_url = general_features.get("uops_info_url", None)
+                    if uops_info_url is not None:
+                        annotations.append(make_link(url=uops_info_url, caption="uops.info"))
+                if len(annotations) > 0:
+                    ann = ",".join(annotations)
+                    ann_insn_str += '<span class="code_comment">{}; [{}]</span>'.format("&nbsp;" * num_indents, ann)
+
+                strs.append(ann_insn_str)
+
             strs.sort()
-            for s in strs:
-                res += escape(s)
-                res += '\n'
+            res += "\n".join(strs)
+
             res += "</div>"
             res += "</td></tr>\n"
 
@@ -72,7 +102,7 @@ def prettify_absblock(absblock, hl_expansion=None, skip_top=False, add_schemes=F
 
     highlight_key = None
     if hl_expansion is not None and hl_expansion[0] == 1:
-        highlight_key = absblock.actx.json_ref_manager.resolve_json_references(hl_expansion[1])[0]
+        highlight_key = actx.json_ref_manager.resolve_json_references(hl_expansion[1])[0]
 
     entries = []
     abs_alias_dict = absblock.abs_aliasing._aliasing_dict
