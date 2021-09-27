@@ -30,6 +30,8 @@ class Campaign(models.Model):
     host_pc = models.CharField(max_length=255)
     total_seconds = models.IntegerField()
 
+    witness_path = models.CharField(max_length=2048) # a path to the directory where we find the witness files.
+
     @property
     def display_name(self):
         return str(self)
@@ -95,12 +97,15 @@ def import_campaign(campaign_dir):
 
     tool_objs = [Tool.objects.get_or_create(full_name=tool_name, defaults={})[0] for tool_name in tools]
 
+    witness_path = str(base_dir / 'witnesses')
+
     campaign = Campaign(
             config_dict = abstraction_config,
             termination_condition = termination_condition,
             date = date,
             host_pc = host_pc,
             total_seconds = total_seconds,
+            witness_path = witness_path,
         )
 
     campaign.save()

@@ -6,6 +6,7 @@ from django.shortcuts import render, get_object_or_404
 from django.utils.safestring import mark_safe
 
 from pathlib import Path
+import os
 
 import django_tables2 as tables
 from markdown import markdown
@@ -14,7 +15,7 @@ from devidisc.abstractioncontext import AbstractionContext
 from devidisc.configurable import config_diff
 
 from .models import Campaign, Discovery, InsnScheme
-from .custom_pretty_printing import prettify_absblock, prettify_seconds, prettify_config_diff, prettify_abstraction_config
+from .custom_pretty_printing import prettify_absblock, prettify_seconds, prettify_config_diff, prettify_abstraction_config, gen_witness_site
 from .helpers import load_abstract_block
 
 from .plots import *
@@ -471,5 +472,35 @@ def single_insnscheme_view(request, campaign_id, ischeme_id):
 
     return render(request, "basic_ui/data_table.html", context)
 
+
+def witness_view(request, campaign_id, discovery_id):
+    discovery_obj = get_object_or_404(Discovery, batch__campaign_id=campaign_id, identifier=discovery_id)
+
+    # We don't add the witness data into the django database but rather just
+    # refer to the original location. This is probably a bad design, but
+    # simplifies things in the project import. It probably also causes security
+    # risks.
+    path = discovery_obj.batch.campaign.witness_path + f'/{discovery_id}.json'
+
+    if not os.path.isfile(path):
+        raise Http404(f"Witness trace could not be found.")
+
+    witness_site = gen_witness_site(path)
+
+    topbarpathlist = [
+            ('all campaigns', django.urls.reverse('basic_ui:all_campaigns')),
+            (f'campaign {campaign_id}', django.urls.reverse('basic_ui:single_campaign', kwargs={'campaign_id': campaign_id})),
+            ('all discoveries', django.urls.reverse('basic_ui:all_discoveries', kwargs={'campaign_id': campaign_id})),
+            (f'discovery {discovery_id}', django.urls.reverse('basic_ui:single_discovery', kwargs={'campaign_id': campaign_id, 'discovery_id': discovery_id})),
+            (f'witness', django.urls.reverse('basic_ui:witness', kwargs={'campaign_id': campaign_id, 'discovery_id': discovery_id})),
+        ]
+
+    context = {
+            'topbarpathlist': topbarpathlist,
+        }
+    context.update(witness_site)
+    context.update(get_docs('single_discovery')) # TODO
+
+    return render(request, 'basic_ui/witness.html', context)
 
 
