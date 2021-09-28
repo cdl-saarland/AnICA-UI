@@ -16,7 +16,7 @@ from devidisc.configurable import config_diff
 
 from .models import Campaign, Discovery, InsnScheme
 from .custom_pretty_printing import prettify_absblock, prettify_seconds, prettify_config_diff, prettify_abstraction_config
-from .witness_site import gen_witness_site
+from .witness_site import gen_witness_site, gen_measurement_site
 from .helpers import load_abstract_block
 
 from .plots import *
@@ -488,7 +488,7 @@ def witness_view(request, campaign_id, discovery_id):
     if not os.path.isfile(path):
         raise Http404(f"Witness trace could not be found.")
 
-    witness_site = gen_witness_site(path)
+    witness_site = gen_witness_site(campaign_id, path)
 
     topbarpathlist = [
             ('all campaigns', django.urls.reverse('basic_ui:all_campaigns')),
@@ -507,8 +507,25 @@ def witness_view(request, campaign_id, discovery_id):
     return render(request, 'basic_ui/witness.html', context)
 
 
-def measurements_empty(request):
+def measurements_empty_view(request):
     return render(request, 'basic_ui/measurements_empty.html')
+
+
+def measurements_view(request, campaign_id, meas_id):
+    campaign_obj = get_object_or_404(Campaign, pk=campaign_id)
+
+
+    config = campaign_obj.config_dict
+    config['predmanager'] = None
+    actx = AbstractionContext(config)
+
+    # if not os.path.isfile(path):
+    #     raise Http404(f"Measurements could not be found.")
+
+    # context = dict()
+    context = gen_measurement_site(actx, meas_id)
+
+    return render(request, 'basic_ui/measurements.html', context)
 
 
 

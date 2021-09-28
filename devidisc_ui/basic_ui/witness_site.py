@@ -1,3 +1,4 @@
+import django
 
 from copy import deepcopy
 import json
@@ -8,9 +9,9 @@ from devidisc.witness import WitnessTrace
 
 from .custom_pretty_printing import prettify_absblock
 
-def gen_witness_site(witness_path):
+def gen_witness_site(campaign_id, witness_path):
     tr = load_witness(witness_path)
-    g =  make_witness_graph(tr)
+    g =  make_witness_graph(campaign_id, tr)
     return g.generate()
 
 def load_witness(trfile, actx=None):
@@ -27,28 +28,35 @@ def load_witness(trfile, actx=None):
     tr = WitnessTrace.from_json_dict(actx, tr_dict)
     return tr
 
-def make_witness_graph(witness):
+def make_witness_graph(campaign_id, witness):
     actx = witness.start.actx
 
     g = HTMLGraph("DeviDisc Visualization", actx=actx)
 
     abb = deepcopy(witness.start)
 
-    parent = g.add_block(text=prettify_absblock(abb), kind="start")
+    empty_link = django.urls.reverse('basic_ui:measurements_empty')
+
+    parent = g.add_block(text=prettify_absblock(abb), kind="start", link=empty_link)
     g.new_row()
 
     for witness in witness.trace:
         meas_id = witness.measurements
 
+        if meas_id is None:
+            link = empty_link
+        else:
+            link = django.urls.reverse('basic_ui:measurements', kwargs={'campaign_id': campaign_id, 'meas_id': meas_id})
+
         if witness.terminate:
-            new_node = g.add_block(text="Terminated: " + witness.comment, kind="end")
+            new_node = g.add_block(text="Terminated: " + witness.comment, kind="end", link=link)
             g.add_edge(parent, new_node)
             continue
 
         if witness.taken:
             abb.apply_expansion(witness.expansion)
 
-            new_node = g.add_block(text=prettify_absblock(abb, witness.expansion), kind="interesting")
+            new_node = g.add_block(text=prettify_absblock(abb, witness.expansion), kind="interesting", link=link)
             g.add_edge(parent, new_node)
 
             parent = new_node
@@ -57,7 +65,7 @@ def make_witness_graph(witness):
             tmp_abb = deepcopy(abb)
             tmp_abb.apply_expansion(witness.expansion)
 
-            new_node = g.add_block(text=prettify_absblock(tmp_abb, witness.expansion), kind="notinteresting")
+            new_node = g.add_block(text=prettify_absblock(tmp_abb, witness.expansion), kind="notinteresting", link=link)
             g.add_edge(parent, new_node)
     g.new_row()
 
@@ -130,4 +138,99 @@ class HTMLGraph:
             "grid_content": grid_content,
             "connector_js": connector_str,
         }
+
+
+_measurement_frame = """
+    <div class="measurement">
+      <h3> Measurement #{meas_id} </h3>
+      <table class="meastable">
+        <tr> <th> assembly </th>
+          <td>
+            <div class="asmblock">{asmblock}</div>
+          </td>
+        </tr>
+        <tr> <th> hex </th>
+          <td>
+            <div class="hexblock">{hexblock}</div>
+          </td>
+        </tr>
+        {predictor_runs}
+      </table>
+    </div>
+"""
+
+_predictor_run_frame = """
+        <tr>
+          <th> {predictor} </th>
+          <td> {result} </td>
+        </tr>
+"""
+
+
+def gen_measurement_site(actx, series_id):
+    with actx.measurement_db as mdb:
+        measdict = mdb.get_series(series_id) # TODO validate
+
+    # series_id = measdict.get("series_id", "N")
+    series_date = measdict["series_date"]
+    source_computer = measdict["source_computer"]
+
+    measurement_texts = []
+
+    num_interesting = 0
+    num_measurements = len(measdict["measurements"])
+
+    for m in measdict["measurements"]:
+        meas_id = m.get("measurement_id", "N")
+        hexblock = m["input"]
+
+        asmblock = '\n'.join(actx.iwho_ctx.coder.hex2asm(hexblock))
+
+        # asmblock = m.get("asm_str", "ASM not available")
+        predictor_run_texts = []
+        for r in m["predictor_runs"]:
+            predictor_text = ", ".join(r["predictor"]) + ", " + r["uarch"]
+            results = []
+            if r["result"] is not None:
+                results.append(r["result"])
+            if r["remark"] is not None:
+                remark = r["remark"]
+                try:
+                    json_dict = json.loads(remark)
+                    if "error" in json_dict:
+                        results.append("\n<div class='code'>" + json_dict["error"] + "</div>")
+                except:
+                    results.append(remark)
+            result_text = ", ".join(map(str, results))
+            predictor_run_texts.append(_predictor_run_frame.format(predictor=predictor_text, result=result_text))
+
+        # compute interestingness to sort by it
+        eval_res = {x: {"TP": r.get("result", None)} for x, r in enumerate(m["predictor_runs"])}
+        interestingness = actx.interestingness_metric.compute_interestingness(eval_res)
+        if actx.interestingness_metric.is_interesting(eval_res):
+            num_interesting += 1
+
+        full_predictor_run_text = "\n".join(predictor_run_texts)
+
+        full_predictor_run_text = _predictor_run_frame.format(predictor="interestingness", result=f"{interestingness:.3f}") + full_predictor_run_text
+
+        meas_text = _measurement_frame.format(meas_id=meas_id, asmblock=asmblock, hexblock=hexblock , predictor_runs=full_predictor_run_text)
+        measurement_texts.append((interestingness, meas_text))
+
+    measurement_texts.sort(key=lambda x: x[0], reverse=True)
+
+    full_meas_text = "\n".join(map(lambda x: x[1], measurement_texts))
+
+    interesting_percentage = (num_interesting / num_measurements) * 100
+
+    comment_str = f"{num_interesting} out of {num_measurements} measurements ({interesting_percentage:.1f}%) are interesting."
+
+    return dict(
+            series_id=series_id,
+            series_date=series_date,
+            comment=comment_str,
+            source_computer=source_computer,
+            measurement_text=full_meas_text)
+
+
 

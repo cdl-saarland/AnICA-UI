@@ -29,7 +29,7 @@
 
 <div id="measurement_window" class="sidecontainer">
     <button id="measurement_window_close_btn" onclick="hide_measurements()">close</button>
-    <iframe id="measurement_iframe" src="{% url 'basic_ui:measurements_empty' %}"></iframe>
+    <iframe id="measurement_iframe" src="{% url 'basic_ui:measurements_empty' %}">loading measurements...</iframe>
 </div>
 
 {% endblock %}
@@ -51,6 +51,8 @@
         var curr_highlighted = null;
 
         function click_handler(elem, target_url) {
+            const meas_iframe = document.getElementById("measurement_iframe");
+            meas_iframe.src = "{% url 'basic_ui:measurements_empty' %}";
             if (curr_highlighted !== elem) {
                 if (curr_highlighted != null) {
                     curr_highlighted.style.backgroundColor = null;
@@ -60,7 +62,7 @@
                 // this is a bit of a hack to make the color transparent
                 elem.style.backgroundColor = color_str.replace("rgb", "rgba").replace(")", ", 0.2)");
             }
-            {# document.getElementById("measurement_iframe").src = target_url; #}
+            meas_iframe.src = target_url;
             show_measurements();
         }
 

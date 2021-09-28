@@ -121,9 +121,12 @@ td {
 }
 
 #measurement_window {
+    padding: 0px;
     padding-top: 60px;
+    bottom: 0px;
     display: none;
     z-index: 500;
+    overflow: hidden;
 }
 
 #measurement_window_close_btn {
@@ -133,7 +136,7 @@ td {
 }
 
 #measurement_iframe {
-  height: 92%;
-  width: 100%;
-  border: 0px;
+    height: calc(100% - 60px);
+    width: 100%;
+    border: 0px;
 }

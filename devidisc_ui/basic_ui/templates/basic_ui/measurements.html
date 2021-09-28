@@ -1,0 +1,23 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" type="text/css" href="{% static 'basic_ui/style.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'basic_ui/witness_style.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'basic_ui/meas_style.css' %}">
+    <title>Measurements - DeviDisc UI</title>
+</head>
+
+<body>
+    <h2>Measurement Series {{ series_id }}</h2>
+    <p>
+    Performed on {{ source_computer }} at {{ series_date }}.
+    </p>
+    <p>
+    {{comment}}
+    </p>
+
+    {{measurement_text | safe}}
+</body>
+</html>
+
