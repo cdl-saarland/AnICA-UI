@@ -14,7 +14,6 @@
     {{ absblock | safe }}
     </div>
 
-
     <h3>Metrics:</h3>
     <table>
         {% for key, value in stats %}
@@ -32,7 +31,11 @@
     {% endfor %}
 
     <h3>Witness:</h3>
-    TODO
+    <ul>
+        <li>
+            <a href='{% url 'basic_ui:witness' campaign_id discovery_id %}'>Click here to open.</a>
+        </li>
+    </ul>
 
 
 {% endblock %}

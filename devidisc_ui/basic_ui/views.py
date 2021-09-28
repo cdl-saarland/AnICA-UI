@@ -374,6 +374,8 @@ def single_discovery_view(request, campaign_id, discovery_id):
         ]
 
     context = {
+            'campaign_id': campaign_id,
+            'discovery_id': discovery_id,
             'absblock': absblock_html,
             'topbarpathlist': topbarpathlist,
 
