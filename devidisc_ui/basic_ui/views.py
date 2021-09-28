@@ -15,7 +15,8 @@ from devidisc.abstractioncontext import AbstractionContext
 from devidisc.configurable import config_diff
 
 from .models import Campaign, Discovery, InsnScheme
-from .custom_pretty_printing import prettify_absblock, prettify_seconds, prettify_config_diff, prettify_abstraction_config, gen_witness_site
+from .custom_pretty_printing import prettify_absblock, prettify_seconds, prettify_config_diff, prettify_abstraction_config
+from .witness_site import gen_witness_site
 from .helpers import load_abstract_block
 
 from .plots import *
