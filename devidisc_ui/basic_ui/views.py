@@ -501,7 +501,7 @@ def witness_view(request, campaign_id, discovery_id):
             'topbarpathlist': topbarpathlist,
         }
     context.update(witness_site)
-    context.update(get_docs('single_discovery')) # TODO
+    context.update(get_docs('witness'))
 
     return render(request, 'basic_ui/witness.html', context)
 
