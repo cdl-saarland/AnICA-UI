@@ -40,7 +40,7 @@ function hide_docs() {
     <div id="content">
         {% block content %}{% endblock %}
     </div>
-    <div id="helpcontainer">
+    <div id="helpcontainer" class="sidecontainer">
         <button id="help-close-button" onclick="hide_docs()">Close Docs</button>
         <h2>Feature Documentation: {{ helptitle }}</h2>
         {{ helpcontent }}

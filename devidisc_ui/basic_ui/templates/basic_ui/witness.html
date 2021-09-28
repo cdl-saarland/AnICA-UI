@@ -27,25 +27,41 @@
 </div>
 </div>
 
+<div id="measurement_window" class="sidecontainer">
+    <button id="measurement_window_close_btn" onclick="hide_measurements()">close</button>
+    <iframe id="measurement_iframe" src="{% url 'basic_ui:measurements_empty' %}"></iframe>
+</div>
+
 {% endblock %}
 
 
 {% block extra_scripts %}
     <script type="text/javascript">
+        function hide_measurements() {
+            const measurement_window = document.getElementById("measurement_window");
+            measurement_window.style.display = "none";
+            curr_highlighted.style.backgroundColor = null;
+            curr_highlighted = null;
+        }
+        function show_measurements() {
+            const measurement_window = document.getElementById("measurement_window");
+            measurement_window.style.display = "block";
+        }
+
         var curr_highlighted = null;
 
-        function clickHandler(ident, target_url) {
-            if (curr_highlighted != ident) {
+        function click_handler(elem, target_url) {
+            if (curr_highlighted !== elem) {
                 if (curr_highlighted != null) {
-                    document.getElementById(curr_highlighted).style.backgroundColor = null;
+                    curr_highlighted.style.backgroundColor = null;
                 }
-                curr_highlighted = ident;
-                const elem = document.getElementById(curr_highlighted)
-                const color_str = window.getComputedStyle(elem).borderColor
+                curr_highlighted = elem;
+                const color_str = window.getComputedStyle(elem).borderColor;
                 // this is a bit of a hack to make the color transparent
-                elem.style.backgroundColor = color_str.replace("rgb", "rgba").replace(")", ", 0.2)")
+                elem.style.backgroundColor = color_str.replace("rgb", "rgba").replace(")", ", 0.2)");
             }
-            document.getElementById("witnessiframe").src = target_url;
+            {# document.getElementById("measurement_iframe").src = target_url; #}
+            show_measurements();
         }
 
         function drawConnector(src_id, dst_id) {

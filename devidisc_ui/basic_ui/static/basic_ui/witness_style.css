@@ -49,6 +49,8 @@
     padding: 10px;
     border-radius: 5px;
     height: fit-content;
+    z-index: 20;
+    background-color: #eee;
 }
 
 .abstractbb {
@@ -116,4 +118,22 @@ td {
 .highlightedcomponent {
     font-weight: bold;
     color: orangered;
+}
+
+#measurement_window {
+    padding-top: 60px;
+    display: none;
+    z-index: 500;
+}
+
+#measurement_window_close_btn {
+    position: absolute;
+    top: 60px;
+    right: 16px;
+}
+
+#measurement_iframe {
+  height: 92%;
+  width: 100%;
+  border: 0px;
 }

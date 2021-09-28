@@ -10,6 +10,8 @@ urlpatterns = [
     path('campaign/<int:campaign_id>/discoveries/<str:discovery_id>/', views.single_discovery_view, name='single_discovery'),
     path('campaign/<int:campaign_id>/discoveries/<str:discovery_id>/witness', views.witness_view, name='witness'),
 
+    path('no-measurements', views.measurements_empty, name='measurements_empty'),
+
     path('campaign/<int:campaign_id>/insnschemes/', views.all_insnschemes_view, name='all_insnschemes'),
     path('campaign/<int:campaign_id>/insnschemes/<int:ischeme_id>/', views.single_insnscheme_view, name='single_insnscheme'),
 ]

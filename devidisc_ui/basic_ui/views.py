@@ -507,3 +507,8 @@ def witness_view(request, campaign_id, discovery_id):
     return render(request, 'basic_ui/witness.html', context)
 
 
+def measurements_empty(request):
+    return render(request, 'basic_ui/measurements_empty.html')
+
+
+

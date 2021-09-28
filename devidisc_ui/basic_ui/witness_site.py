@@ -113,7 +113,8 @@ class HTMLGraph:
             grid_content += textwrap.indent('<div class="gridsubcontainer">\n', 16*' ')
             for block in reversed(row):
                 link = 'null' if block.link is None else f"\'{block.link}\'"
-                grid_content += textwrap.indent(f'<div id="{block.ident}" class="griditem block_{block.kind}">\n', 18*' ')
+                onclick = f'onclick="click_handler(this, {link})"'
+                grid_content += textwrap.indent(f'<div id="{block.ident}" class="griditem block_{block.kind}" {onclick}>\n', 18*' ')
                 grid_content += f'<div class="abstractbb">{block.text}</div>\n'
                 grid_content += textwrap.indent('</div>\n', 18*' ')
             grid_content += textwrap.indent('</div>\n', 16*' ')
