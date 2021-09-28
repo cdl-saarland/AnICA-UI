@@ -9,6 +9,11 @@
 /*     align-items: stretch; */
 /* } */
 /*  */
+
+#content {
+    max-width: 95%;
+}
+
 .graphcolumn {
 /*     resize: horizontal; */
 /*     width: 60%; */

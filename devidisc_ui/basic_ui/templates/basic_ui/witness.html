@@ -51,9 +51,8 @@
         var curr_highlighted = null;
 
         function click_handler(elem, target_url) {
-            const meas_iframe = document.getElementById("measurement_iframe");
-            meas_iframe.src = "{% url 'basic_ui:measurements_empty' %}";
             if (curr_highlighted !== elem) {
+                const meas_iframe = document.getElementById("measurement_iframe");
                 if (curr_highlighted != null) {
                     curr_highlighted.style.backgroundColor = null;
                 }
@@ -61,8 +60,8 @@
                 const color_str = window.getComputedStyle(elem).borderColor;
                 // this is a bit of a hack to make the color transparent
                 elem.style.backgroundColor = color_str.replace("rgb", "rgba").replace(")", ", 0.2)");
+                meas_iframe.src = target_url;
             }
-            meas_iframe.src = target_url;
             show_measurements();
         }
 
