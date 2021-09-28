@@ -169,7 +169,10 @@ _predictor_run_frame = """
 
 def gen_measurement_site(actx, series_id):
     with actx.measurement_db as mdb:
-        measdict = mdb.get_series(series_id) # TODO validate
+        measdict = mdb.get_series(series_id)
+
+    if measdict is None:
+        return None
 
     # series_id = measdict.get("series_id", "N")
     series_date = measdict["series_date"]

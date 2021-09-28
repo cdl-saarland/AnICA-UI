@@ -519,11 +519,10 @@ def measurements_view(request, campaign_id, meas_id):
     config['predmanager'] = None
     actx = AbstractionContext(config)
 
-    # if not os.path.isfile(path):
-    #     raise Http404(f"Measurements could not be found.")
-
-    # context = dict()
     context = gen_measurement_site(actx, meas_id)
+
+    if context is None:
+        raise Http404(f"Measurements could not be found.")
 
     return render(request, 'basic_ui/measurements.html', context)
 
