@@ -35,6 +35,9 @@ def make_link(url, caption, is_relative=False):
 def prettify_absblock(absblock, hl_expansion=None, skip_top=False, add_schemes=False):
     actx = absblock.actx
 
+    prettify_id = getattr(actx, 'prettify_id', 0)
+    actx.prettify_id = prettify_id + 1
+
     res = ""
     res += "<b>Abstract Instructions:</b>\n"
     res += "<table class=\"absinsn\">\n"
@@ -57,7 +60,7 @@ def prettify_absblock(absblock, hl_expansion=None, skip_top=False, add_schemes=F
         res += "\n</tr>\n"
 
         if add_schemes:
-            content_id = "expl_schemes_{}".format(idx) # TODO add a unique identifier before the idx
+            content_id = "expl_schemes_{}_{}".format(prettify_id, idx)
             res += "<tr class=\"absinsn\"><td class=\"absinsn\"></td><td class=\"absinsn\">"
             res += "<div class=\"absinsn indent_content\">"
             res += "Respresented Schemes: {} <button onclick=\"(function(){{let el = document.getElementById('{content_id}'); if (el.style.visibility === 'visible') {{el.style.visibility = 'collapse'; }} else {{el.style.visibility = 'visible';}} }})()\">show</button>\n".format(len(feasible_schemes), content_id=content_id)

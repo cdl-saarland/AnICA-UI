@@ -351,6 +351,8 @@ def single_discovery_view(request, campaign_id, discovery_id):
 
     absblock_html = prettify_absblock(absblock, add_schemes=True)
 
+    min_absblock_html = prettify_absblock(absblock.minimize(), add_schemes=True)
+
     mean_interestingness = discovery_obj.interestingness
     ab_coverage = discovery_obj.ab_coverage
     witness_length = discovery_obj.witness_len
@@ -378,6 +380,7 @@ def single_discovery_view(request, campaign_id, discovery_id):
             'campaign_id': campaign_id,
             'discovery_id': discovery_id,
             'absblock': absblock_html,
+            'min_absblock': min_absblock_html,
             'topbarpathlist': topbarpathlist,
 
             'stats': stats,

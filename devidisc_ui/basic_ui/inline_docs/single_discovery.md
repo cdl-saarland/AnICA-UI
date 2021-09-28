@@ -4,12 +4,16 @@ This shows the details of a single discovery:
 
 
 ### Discovery
-This is a representation of the abstract basic block constituting this discovery.
+These are representations of the abstract basic block constituting this discovery.
 
 Abstract basic blocks contain two top-level components: abstract instructions and constraints on the aliasing of instruction operands.
 Each abstract instruction contains subcomponents for abstract features.
 These together form constraints on the set of instruction schemes that are represented by this abstract instruction.
 At the end of each abstract instruction, this view contains a count of represented schemes with a `show` button that will display an explicit list of all instruction schemes represented by this abstract instruction when clicked (click again to hide).
+
+The left, *original* abstract block is the direct result of the generalization algorithm.
+The right, *narrowed* one is equivalent to the left one (i.e. its abstract instructions represent the same sets of instruction schemes), but the abstract instructions have been made as specific as possible.
+This narrowing may ease interpretating the abstract block for humans.
 
 ### Metrics
 

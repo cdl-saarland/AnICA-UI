@@ -10,8 +10,20 @@
 
 {% block content %}
     <h3>Discovery:</h3>
-    <div class="indent_content">
-    {{ absblock | safe }}
+    <div style="display:flex;">
+        <div style="flex: 0 0 50%;">
+            <h4>Original Abstract Block:</h4>
+            <div class="indent_content">
+            {{ absblock | safe }}
+            </div>
+        </div>
+
+        <div style="flex: 1;">
+            <h4>Narrowed Abstract Block:</h4>
+            <div class="indent_content">
+            {{ min_absblock | safe }}
+            </div>
+        </div>
     </div>
 
     <h3>Metrics:</h3>
