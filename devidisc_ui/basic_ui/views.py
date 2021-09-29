@@ -12,7 +12,7 @@ import django_tables2 as tables
 from markdown import markdown
 
 from devidisc.abstractioncontext import AbstractionContext
-from devidisc.configurable import config_diff
+from devidisc.configurable import config_diff, pretty_print
 
 from .models import Campaign, Discovery, InsnScheme
 from .custom_pretty_printing import prettify_absblock, prettify_seconds, prettify_config_diff, prettify_abstraction_config
@@ -343,6 +343,10 @@ def all_discoveries_view(request, campaign_id):
 
     return render(request, "basic_ui/data_table.html", context)
 
+def discovery_json_view(request, campaign_id, discovery_id):
+    discovery_obj = get_object_or_404(Discovery, batch__campaign_id=campaign_id, identifier=discovery_id)
+    json_content = pretty_print(discovery_obj.absblock)
+    return HttpResponse(json_content, content_type="text/plain")
 
 def single_discovery_view(request, campaign_id, discovery_id):
     discovery_obj = get_object_or_404(Discovery, batch__campaign_id=campaign_id, identifier=discovery_id)
