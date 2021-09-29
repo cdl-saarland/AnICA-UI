@@ -77,7 +77,7 @@ def prettify_absblock(absblock, hl_expansion=None, skip_top=False, add_schemes=F
                 ischeme_str = str(ischeme)
                 ann_insn_str = escape(ischeme_str)
 
-                num_indents = max(4, 52 - len(ischeme_str))
+                num_indents = max(4, 44 - len(ischeme_str))
                 annotations = []
                 if features is not None and len(features) > 0:
                     general_features = features[0]
