@@ -17,6 +17,8 @@ from devidisc.configurable import load_json_config, store_json_config
 
 from devidisc.satsumption import ab_coverage
 
+from devidisc.utils import Timer
+
 def load_absblock(abfile, actx=None):
     json_dict = load_json_config(abfile)
 
@@ -43,59 +45,71 @@ def main():
 
     args = ap.parse_args()
 
+    Timer.enabled = True
+
     random.seed(args.seed)
 
-    for campaign_dir in args.campaigndirs:
-        base_dir = Path(campaign_dir)
+    with Timer('total') as timer:
 
-        result_path = base_dir / 'metrics.json'
+        for campaign_dir in args.campaigndirs:
+            base_dir = Path(campaign_dir)
 
-        if result_path.exists() and not args.overwrite:
-            print(f"Skipping campaign directory '{base_dir}' because a 'metrics.json' already exists. Run with '--overwrite' to overwrite.")
-            continue
+            result_path = base_dir / 'metrics.json'
 
-        print(f"computing metrics for '{base_dir}'")
+            if result_path.exists() and not args.overwrite:
+                print(f"Skipping campaign directory '{base_dir}' because a 'metrics.json' already exists. Run with '--overwrite' to overwrite.")
+                continue
 
-        discovery2metrics = dict()
+            print(f"computing metrics for '{base_dir}'")
 
-        actx = None
-        for fn in os.listdir(base_dir / 'discoveries'):
-            discovery_id, ext = os.path.splitext(fn)
-            assert ext == '.json'
-            full_path = base_dir / 'discoveries' / f'{discovery_id}.json'
+            discovery2metrics = dict()
 
-            absblock, result_ref = load_absblock(full_path, actx=actx)
-            if actx is None:
-                actx = absblock.actx
+            actx = None
+            for fn in os.listdir(base_dir / 'discoveries'):
+                discovery_id, ext = os.path.splitext(fn)
+                assert ext == '.json'
+                full_path = base_dir / 'discoveries' / f'{discovery_id}.json'
 
-            with actx.measurement_db as mdb:
-                meas_series = mdb.get_series(result_ref)
+                absblock, result_ref = load_absblock(full_path, actx=actx)
+                if actx is None:
+                    actx = absblock.actx
+                    mdb = actx.measurement_db
+                    mdb._init_con()
 
-            # get interestingness
-            ints = []
-            for entry in meas_series['measurements']:
-                eval_res = dict()
-                for r in entry['predictor_runs']:
-                    eval_res[r['predictor']] = {'TP': r['result']}
-                ints.append(actx.interestingness_metric.compute_interestingness(eval_res))
+                with Timer.Sub('get_series'):
+                    # with actx.measurement_db as mdb:
+                    meas_series = mdb.get_series(result_ref)
 
-            if len(ints) == 0 or any(map(lambda x: not math.isfinite(x), ints)) or any(map(lambda x: x <= 0, ints)):
-                mean_interestingness = math.inf
-            else:
-                mean_interestingness = geometric_mean(ints)
+                with Timer.Sub('compute_interestingness'):
+                    # get interestingness
+                    ints = []
+                    for entry in meas_series['measurements']:
+                        eval_res = dict()
+                        for r in entry['predictor_runs']:
+                            eval_res[r['predictor']] = {'TP': r['result']}
+                        ints.append(actx.interestingness_metric.compute_interestingness(eval_res))
 
-            # compute coverage
-            coverage = ab_coverage(absblock, args.covnum)
+                if len(ints) == 0 or any(map(lambda x: not math.isfinite(x), ints)) or any(map(lambda x: x <= 0, ints)):
+                    mean_interestingness = math.inf
+                else:
+                    mean_interestingness = geometric_mean(ints)
 
-            metrics = {
-                    'mean_interestingness' : mean_interestingness,
-                    'interestingness_series': ints,
-                    'ab_coverage': coverage,
-                }
+                with Timer.Sub('ab_coverage'):
+                    # compute coverage
+                    coverage = ab_coverage(absblock, args.covnum)
 
-            discovery2metrics[discovery_id] = metrics
+                metrics = {
+                        'mean_interestingness' : mean_interestingness,
+                        'interestingness_series': ints,
+                        'ab_coverage': coverage,
+                    }
 
-        store_json_config(discovery2metrics, result_path)
+                discovery2metrics[discovery_id] = metrics
+
+            mdb._deinit_con()
+            store_json_config(discovery2metrics, result_path)
+
+    print(timer.get_result())
 
 
 if __name__ == "__main__":
