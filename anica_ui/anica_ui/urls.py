@@ -1,4 +1,4 @@
-"""devidisc_ui URL Configuration
+"""anica_ui URL Configuration
 
 The `urlpatterns` list routes URLs to views. For more information please see:
     https://docs.djangoproject.com/en/3.2/topics/http/urls/
@@ -17,6 +17,6 @@ from django.contrib import admin
 from django.urls import include, path
 
 urlpatterns = [
-    path('devidisc/', include('basic_ui.urls')),
+    path('anica/', include('basic_ui.urls')),
     path('admin/', admin.site.urls),
 ]

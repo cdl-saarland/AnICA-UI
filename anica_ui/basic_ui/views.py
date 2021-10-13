@@ -11,8 +11,8 @@ import os
 import django_tables2 as tables
 from markdown import markdown
 
-from devidisc.abstractioncontext import AbstractionContext
-from devidisc.configurable import config_diff, pretty_print
+from anica.abstractioncontext import AbstractionContext
+from anica.configurable import config_diff, pretty_print
 
 from .models import Campaign, Discovery, InsnScheme
 from .custom_pretty_printing import prettify_absblock, prettify_seconds, prettify_config_diff, prettify_abstraction_config

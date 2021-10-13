@@ -1,5 +1,5 @@
 """
-WSGI config for devidisc_ui project.
+WSGI config for anica_ui project.
 
 It exposes the WSGI callable as a module-level variable named ``application``.
 
@@ -11,6 +11,6 @@ import os
 
 from django.core.wsgi import get_wsgi_application
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'devidisc_ui.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'anica_ui.settings')
 
 application = get_wsgi_application()

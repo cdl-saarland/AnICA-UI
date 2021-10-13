@@ -6,12 +6,12 @@ import json
 import math
 from pathlib import Path
 
-from devidisc.configurable import load_json_config
+from anica.configurable import load_json_config
 
 import logging
 logger = logging.getLogger(__name__)
 
-from devidisc.abstractblock import AbstractBlock
+from anica.abstractblock import AbstractBlock
 
 from .helpers import load_abstract_block
 

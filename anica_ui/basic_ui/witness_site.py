@@ -4,8 +4,8 @@ from copy import deepcopy
 import json
 import textwrap
 
-from devidisc.abstractioncontext import AbstractionContext
-from devidisc.witness import WitnessTrace
+from anica.abstractioncontext import AbstractionContext
+from anica.witness import WitnessTrace
 
 from .custom_pretty_printing import prettify_absblock
 
@@ -31,7 +31,7 @@ def load_witness(trfile, actx=None):
 def make_witness_graph(campaign_id, witness):
     actx = witness.start.actx
 
-    g = HTMLGraph("DeviDisc Visualization", actx=actx)
+    g = HTMLGraph("AnICA Visualization", actx=actx)
 
     abb = deepcopy(witness.start)
 

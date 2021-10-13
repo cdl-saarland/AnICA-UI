@@ -10,12 +10,12 @@ The django test server can be started using the following command:
 ```
 With this command running on a system, the UI will be available on that system
 in a web browser (tested mainly with Chromium) at
-`http://127.0.0.1:8000/devidisc/`.
+`http://127.0.0.1:8000/anica/`.
 
 
 ### Adding New Campaigns
 
-New devidisc campaigns can be added to the UI via a [management command](https://docs.djangoproject.com/en/3.2/howto/custom-management-commands/):
+New AnICA campaigns can be added to the UI via a [management command](https://docs.djangoproject.com/en/3.2/howto/custom-management-commands/):
 ```
 ./manage.py import_campaigns path/to/first/campaign/dir path/to/second/campaign/dir ...
 ```

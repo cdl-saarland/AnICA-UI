@@ -11,13 +11,13 @@ from pathlib import Path
 import random
 from statistics import geometric_mean
 
-from devidisc.abstractblock import AbstractBlock
-from devidisc.abstractioncontext import AbstractionContext
-from devidisc.configurable import load_json_config, store_json_config
+from anica.abstractblock import AbstractBlock
+from anica.abstractioncontext import AbstractionContext
+from anica.configurable import load_json_config, store_json_config
 
-from devidisc.satsumption import ab_coverage
+from anica.satsumption import ab_coverage
 
-from devidisc.utils import Timer
+from anica.utils import Timer
 
 def load_absblock(abfile, actx=None):
     json_dict = load_json_config(abfile)

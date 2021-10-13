@@ -1,5 +1,5 @@
-from devidisc.abstractblock import AbstractBlock
-from devidisc.abstractioncontext import AbstractionContext
+from anica.abstractblock import AbstractBlock
+from anica.abstractioncontext import AbstractionContext
 
 
 def load_abstract_block(json_dict, actx):
