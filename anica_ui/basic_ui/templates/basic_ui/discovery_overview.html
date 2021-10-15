@@ -28,6 +28,11 @@
         </div>
     </div>
 
+    <h3>Remarks:</h3>
+    <ul>
+        {{ remark_text | safe }}
+    </ul>
+
     <h3>Metrics:</h3>
     <table>
         {% for key, value in stats %}

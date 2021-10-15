@@ -362,6 +362,10 @@ def single_discovery_view(request, campaign_id, discovery_id):
     witness_length = discovery_obj.witness_len
     generality = discovery_obj.generality
 
+    remark_text = discovery_obj.remarks
+    if remark_text is None:
+        remark_text = "No remarks."
+
     stats = [
             ('geomean interestingness', mean_interestingness),
             ('sample coverage', ab_coverage),
@@ -389,6 +393,7 @@ def single_discovery_view(request, campaign_id, discovery_id):
 
             'stats': stats,
             'plots': plots,
+            'remark_text': remark_text,
         }
     context.update(get_docs('single_discovery'))
 

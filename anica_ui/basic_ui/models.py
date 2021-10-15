@@ -67,6 +67,7 @@ class Discovery(models.Model):
     ab_coverage = models.FloatField()
     generality = models.IntegerField()
     occurring_insnschemes = models.ManyToManyField(InsnScheme)
+    remarks = models.TextField(null=True)
 
     def __str__(self):
         return self.identifier
@@ -161,6 +162,20 @@ def import_campaign(campaign_dir):
                 num_insns = len(absblock['ab']['abs_insns'])
                 witness_len = gen_entry['witness_len']
 
+                remarks = absblock.get('remarks', None)
+                if remarks is None:
+                    remark_text = None
+                else:
+                    remark_strs = []
+                    for r in remarks:
+                        if isinstance(r, str):
+                            remark_str = r
+                        else:
+                            assert isinstance(r, tuple) or isinstance(r, list)
+                            remark_str = r[0].format(*r[1:])
+                        remark_strs.append("<li>{}</li>".format(remark_str))
+                    remark_text = "\n".join(remark_strs)
+
                 ab = load_abstract_block(absblock, actx)
                 if actx is None:
                     actx = ab.actx
@@ -190,6 +205,7 @@ def import_campaign(campaign_dir):
                         interestingness = mean_interestingness,
                         ab_coverage = ab_coverage,
                         generality = generality,
+                        remarks = remark_text,
                     ))
     Discovery.objects.bulk_create(discovery_objs)
 
