@@ -63,8 +63,9 @@ class Discovery(models.Model):
     absblock = models.JSONField()
     num_insns = models.IntegerField()
     witness_len = models.IntegerField()
-    interestingness = models.FloatField()
-    ab_coverage = models.FloatField()
+    interestingness = models.FloatField(null=True)
+    ab_coverage = models.FloatField(null=True)
+    subsumed_by = models.CharField(max_length=63, null=True)
     generality = models.IntegerField()
     occurring_insnschemes = models.ManyToManyField(InsnScheme)
     remarks = models.TextField(null=True)
@@ -192,9 +193,11 @@ def import_campaign(campaign_dir):
                 if ab_metrics is not None:
                     mean_interestingness = ab_metrics['mean_interestingness']
                     ab_coverage = ab_metrics['ab_coverage']
+                    subsumed_by = ab_metrics['subsumed_by']
                 else:
-                    mean_interestingness = 42.0
-                    ab_coverage = 42.0
+                    mean_interestingness = None
+                    ab_coverage = None
+                    subsumed_by = None
 
                 discovery_objs.append(Discovery(
                         batch = batch_obj,
@@ -204,6 +207,7 @@ def import_campaign(campaign_dir):
                         witness_len = witness_len,
                         interestingness = mean_interestingness,
                         ab_coverage = ab_coverage,
+                        subsumed_by = subsumed_by,
                         generality = generality,
                         remarks = remark_text,
                     ))

@@ -15,7 +15,7 @@ from anica.abstractblock import AbstractBlock
 from anica.abstractioncontext import AbstractionContext
 from anica.configurable import load_json_config, store_json_config
 
-from anica.satsumption import ab_coverage
+from anica.satsumption import ab_coverage, check_subsumed_aa
 
 from anica.utils import Timer
 
@@ -64,6 +64,8 @@ def main():
 
             discovery2metrics = dict()
 
+            unsubsumed_absblocks = []
+
             actx = None
             for fn in os.listdir(base_dir / 'discoveries'):
                 discovery_id, ext = os.path.splitext(fn)
@@ -98,10 +100,27 @@ def main():
                     # compute coverage
                     coverage = ab_coverage(absblock, args.covnum)
 
+                with Timer.Sub('subsumption_check'):
+                    # check if this discovery subsumes any of the previous ones
+                    # The other direction should not be possible, because such
+                    # cases should be prevented by the subsumption check in the
+                    # discovery algorithm.
+                    next_unsubsumed_absblocks = []
+                    for prev_id, prev_ab in unsubsumed_absblocks:
+                        if (len(prev_ab.abs_insns) == len(absblock.abs_insns) and
+                                check_subsumed_aa(prev_ab, absblock)):
+                            discovery2metrics[prev_id]['subsumed_by'] = discovery_id
+                            continue
+                        next_unsubsumed_absblocks.append((prev_id, prev_ab))
+                    unsubsumed_absblocks = next_unsubsumed_absblocks
+
+                    unsubsumed_absblocks.append((discovery_id, absblock))
+
                 metrics = {
                         'mean_interestingness' : mean_interestingness,
                         'interestingness_series': ints,
                         'ab_coverage': coverage,
+                        'subsumed_by': None,
                     }
 
                 discovery2metrics[discovery_id] = metrics

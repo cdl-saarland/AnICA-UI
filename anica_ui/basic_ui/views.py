@@ -109,7 +109,7 @@ def all_campaigns_view(request):
     data = []
     for campaign, delta in zip(campaigns, config_deltas):
         num_batches = campaign.discoverybatch_set.count()
-        num_discoveries = Discovery.objects.filter(batch__campaign=campaign).count()
+        num_discoveries = Discovery.objects.filter(batch__campaign=campaign).filter(subsumed_by=None).count()
         tool_list = campaign.tools.all()
         init_interesting_sample_ratio = None
         if num_batches > 0:
@@ -221,6 +221,10 @@ def single_campaign_view(request, campaign_id):
     relevant_discoveries = Discovery.objects.filter(batch__campaign=campaign_obj, batch__batch_index__range=(0, batch_pos-1))
     num_discoveries = relevant_discoveries.count()
 
+    relevant_discoveries = relevant_discoveries.filter(subsumed_by=None)
+
+    num_discoveries_not_subsumed = relevant_discoveries.count()
+
     total_seconds = batches.aggregate(Sum('batch_time'))['batch_time__sum']
     time_spent = prettify_seconds(total_seconds)
 
@@ -245,7 +249,8 @@ def single_campaign_view(request, campaign_id):
 
     stats = [
             ('batches run', num_batches),
-            ('discoveries made', num_discoveries),
+            ('discoveries made', num_discoveries_not_subsumed),
+            ('discoveries made (before filtering subsumed ones)', num_discoveries),
             ('discoveries per batch', discoveries_per_batch),
             ('average generality', avg_generality),
             ('average witness length', avg_witness_length),
@@ -324,7 +329,14 @@ class DiscoveryTable(tables.Table):
 
 
 def all_discoveries_view(request, campaign_id):
-    table = DiscoveryTable(Discovery.objects.filter(batch__campaign_id=campaign_id))
+    show_subsumed = request.GET.get('show_subsumed', '0')
+    show_subsumed = (show_subsumed != '0')
+
+    objs = Discovery.objects.filter(batch__campaign_id=campaign_id)
+    if not show_subsumed:
+        objs = objs.filter(subsumed_by=None)
+
+    table = DiscoveryTable(objs)
 
     tables.RequestConfig(request).configure(table)
 
@@ -361,6 +373,7 @@ def single_discovery_view(request, campaign_id, discovery_id):
     ab_coverage = discovery_obj.ab_coverage
     witness_length = discovery_obj.witness_len
     generality = discovery_obj.generality
+    subsumed_by = discovery_obj.subsumed_by
 
     remark_text = discovery_obj.remarks
     if remark_text is None:
@@ -372,6 +385,9 @@ def single_discovery_view(request, campaign_id, discovery_id):
             ('generality', generality),
             ('witness length', witness_length),
         ]
+
+    if subsumed_by is not None:
+        stats.append('subsumed by', subsumed_by)
 
     plots = [
             make_interestingness_histogramm_plot(list(discovery_obj.measurement_set.all())),
