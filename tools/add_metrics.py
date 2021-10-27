@@ -107,8 +107,7 @@ def main():
                     # discovery algorithm.
                     next_unsubsumed_absblocks = []
                     for prev_id, prev_ab in unsubsumed_absblocks:
-                        if (len(prev_ab.abs_insns) == len(absblock.abs_insns) and
-                                check_subsumed_aa(prev_ab, absblock)):
+                        if check_subsumed_aa(prev_ab, absblock):
                             discovery2metrics[prev_id]['subsumed_by'] = discovery_id
                             continue
                         next_unsubsumed_absblocks.append((prev_id, prev_ab))
