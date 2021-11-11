@@ -263,10 +263,13 @@ def single_campaign_view(request, campaign_id):
             make_generality_histogramm_plot(relevant_discoveries, cmp_discoveries),
         ]
 
+    restrict_to_supported_insns = campaign_obj.restrict_to_supported_insns
+
     context = {
             'campaign': campaign_obj,
             'tool_list': tool_list,
             'termination_condition': termination_condition,
+            'restrict_to_supported_insns': restrict_to_supported_insns,
             'abstraction_config': cfg_str,
 
             'is_comparing': len(cmp_campaign_objs) > 0,

@@ -23,6 +23,9 @@
             {% endfor %}
         </ul>
 
+    <h3>Only use supported instructions:</h3>
+    {{restrict_to_supported_insns}}
+
     <h3>Abstraction Config:</h3>
         {{ abstraction_config | safe }}
 

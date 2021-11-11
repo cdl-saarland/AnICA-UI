@@ -12,6 +12,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 from anica.abstractblock import AbstractBlock
+from anica.abstractioncontext import AbstractionContext
 
 from .helpers import load_abstract_block
 
@@ -29,6 +30,8 @@ class Campaign(models.Model):
     date = models.DateField()
     host_pc = models.CharField(max_length=255)
     total_seconds = models.IntegerField()
+
+    restrict_to_supported_insns = models.BooleanField()
 
     witness_path = models.CharField(max_length=2048) # a path to the directory where we find the witness files.
 
@@ -91,6 +94,8 @@ def import_campaign(campaign_dir):
     tools = campaign_config['predictors']
     termination_condition = campaign_config['termination']
 
+    restrict_to_supported_insns = campaign_config['restrict_to_supported_insns']
+
     report = load_json_config(base_dir / "report.json")
 
     date = parse_datetime(report['start_date'])
@@ -107,6 +112,7 @@ def import_campaign(campaign_dir):
             date = date,
             host_pc = host_pc,
             total_seconds = total_seconds,
+            restrict_to_supported_insns = restrict_to_supported_insns,
             witness_path = witness_path,
         )
 
@@ -149,7 +155,17 @@ def import_campaign(campaign_dir):
     ischeme_map = defaultdict(set)
     used_ischemes = set()
 
+    # TODO make this work
+    # if restrict_to_supported_insns:
+    #     # respect the restriction to the supported instructions, so that the generality is computed correctly here
+    #     rest_keys = tools
+    # else:
+    #     rest_keys = None
+    #
+    # actx = AbstractionContext(config=abstraction_config, restrict_to_insns_for=rest_keys)
+
     actx = None
+
     discovery_objs = []
     for batch_entry, batch_obj in zip(report['per_batch_stats'], batch_objs):
         for sample_entry in batch_entry['per_interesting_sample_stats']:
