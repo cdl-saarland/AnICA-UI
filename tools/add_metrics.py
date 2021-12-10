@@ -13,7 +13,7 @@ from statistics import geometric_mean
 
 from anica.abstractblock import AbstractBlock
 from anica.abstractioncontext import AbstractionContext
-from anica.configurable import load_json_config, store_json_config
+from iwho.configurable import load_json_config, store_json_config
 
 from anica.satsumption import ab_coverage, check_subsumed_aa
 

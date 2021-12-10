@@ -6,7 +6,7 @@ import json
 import math
 from pathlib import Path
 
-from anica.configurable import load_json_config
+from iwho.configurable import load_json_config
 
 import logging
 logger = logging.getLogger(__name__)

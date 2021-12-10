@@ -13,7 +13,7 @@ At the end of each abstract instruction, this view contains a count of represent
 
 The left, *original* abstract block is the direct result of the generalization algorithm.
 The right, *narrowed* one is equivalent to the left one (i.e. its abstract instructions represent the same sets of instruction schemes), but the abstract instructions have been made as specific as possible.
-This narrowing may ease interpretating the abstract block for humans.
+This narrowing may ease interpreting the abstract block for humans.
 
 ### Remarks
 This section displays more or less notable occurrences in the generalization of this discovery.
@@ -39,7 +39,7 @@ This section contains metrics for the discovery:
 
 For a more detailed overview, this section displays plots concerning the properties of this discovery:
 
-  - Interestingness of Samples: This is a histrogram showing the distribution of interestingness values in the samples that justify this discovery.
+  - Interestingness of Samples: This is a histogram showing the distribution of interestingness values in the samples that justify this discovery.
     Infinite values are currently represented as values larger than any other occuring values, which is not really a good indicator.
 
 (If plots are not present, the necessary data has not been computed before importing the discovery campaign.)

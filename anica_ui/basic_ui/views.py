@@ -12,7 +12,7 @@ import django_tables2 as tables
 from markdown import markdown
 
 from anica.abstractioncontext import AbstractionContext
-from anica.configurable import config_diff, pretty_print
+from iwho.configurable import config_diff, pretty_print
 
 from .models import Campaign, Discovery, InsnScheme
 from .custom_pretty_printing import prettify_absblock, prettify_seconds, prettify_config_diff, prettify_abstraction_config
@@ -85,10 +85,12 @@ def all_campaigns_view(request):
     campaigns = Campaign.objects.all()
 
     if len(campaigns) == 0:
-        return render(request, "basic_ui/all_campaigns_empty.html", {
-            "title": "All Campaigns",
-            'topbarpathlist': topbarpathlist,
-        })
+        context = {
+                "title": "All Campaigns",
+                'topbarpathlist': topbarpathlist,
+            }
+        context.update(get_docs('all_campaigns'))
+        return render(request, "basic_ui/all_campaigns_empty.html", context)
 
     assert len(campaigns) > 0
 

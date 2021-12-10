@@ -55,5 +55,5 @@ If a batch prefix is specified, it should be specified in both views explicitly 
 
 ### Detailed Results:
   - All Discoveries: This is a link to a list of all discoveries made in this campaign.
-  - All occuring Instruction Schemes: This is a link to a list of all instruction schemes that occur in any discovery of this campaign.
+  - All occurring Instruction Schemes: This is a link to a list of all instruction schemes that occur in any discovery of this campaign.
 
