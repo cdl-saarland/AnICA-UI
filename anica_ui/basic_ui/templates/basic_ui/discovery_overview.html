@@ -12,12 +12,11 @@
     <h3>Discovery:</h3>
     <div style="display:flex;">
         <div style="flex: 0 0 50%;">
-            <h4>Original Abstract Block:</h4>
+            <h4>Original Abstract Block: [<a href="{% url 'basic_ui:discovery_json' campaign_id discovery_id %}">raw json</a>] </h4>
             <div class="indent_content">
             {{ absblock | safe }}
             </div>
 
-            [<a href="{% url 'basic_ui:discovery_json' campaign_id discovery_id %}">raw json</a>]
         </div>
 
         <div style="flex: 1;">
