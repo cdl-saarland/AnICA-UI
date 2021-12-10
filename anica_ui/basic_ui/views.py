@@ -303,9 +303,6 @@ class DiscoveryTable(tables.Table):
     num_insns = tables.Column(
             attrs={"td": discovery_table_attrs, "th": discovery_table_attrs},
             verbose_name="# Instructions", empty_values=())
-    ab_coverage = tables.Column(
-            attrs={"td": discovery_table_attrs, "th": discovery_table_attrs},
-            verbose_name="Sample Coverage")
     interestingness = tables.Column(
             attrs={"td": discovery_table_attrs, "th": discovery_table_attrs},
             verbose_name="Mean Interestingness")
@@ -375,7 +372,6 @@ def single_discovery_view(request, campaign_id, discovery_id):
     min_absblock_html = prettify_absblock(absblock.minimize(), add_schemes=True)
 
     mean_interestingness = discovery_obj.interestingness
-    ab_coverage = discovery_obj.ab_coverage
     witness_length = discovery_obj.witness_len
     generality = discovery_obj.generality
     subsumed_by = discovery_obj.subsumed_by
@@ -386,7 +382,6 @@ def single_discovery_view(request, campaign_id, discovery_id):
 
     stats = [
             ('geomean interestingness', mean_interestingness),
-            ('sample coverage', ab_coverage),
             ('generality', generality),
             ('witness length', witness_length),
         ]

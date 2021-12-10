@@ -15,7 +15,7 @@ from anica.abstractblock import AbstractBlock
 from anica.abstractioncontext import AbstractionContext
 from iwho.configurable import load_json_config, store_json_config
 
-from anica.satsumption import ab_coverage, check_subsumed_aa
+from anica.satsumption import check_subsumed_aa
 
 from anica.utils import Timer
 
@@ -96,10 +96,6 @@ def main():
                 else:
                     mean_interestingness = geometric_mean(ints)
 
-                with Timer.Sub('ab_coverage'):
-                    # compute coverage
-                    coverage = ab_coverage(absblock, args.covnum)
-
                 with Timer.Sub('subsumption_check'):
                     # check if this discovery subsumes any of the previous ones
                     # The other direction should not be possible, because such
@@ -118,7 +114,6 @@ def main():
                 metrics = {
                         'mean_interestingness' : mean_interestingness,
                         'interestingness_series': ints,
-                        'ab_coverage': coverage,
                         'subsumed_by': None,
                     }
 
