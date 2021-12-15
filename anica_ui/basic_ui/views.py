@@ -52,7 +52,7 @@ class CampaignTable(tables.Table):
     campaign_id = tables.Column(
             linkify=(lambda value: django.urls.reverse('basic_ui:single_campaign', kwargs={'campaign_id': value})),
             attrs={"td": campaign_table_attrs, "th": campaign_table_attrs},
-            verbose_name="Campaign ID")
+            verbose_name="ID")
     date = tables.Column(attrs={"td": campaign_table_attrs, "th": campaign_table_attrs},
             verbose_name="Start Date")
     host_pc = tables.Column(attrs={"td": campaign_table_attrs, "th": campaign_table_attrs},
@@ -74,6 +74,7 @@ class CampaignTable(tables.Table):
         return prettify_seconds(value)
 
     class Meta:
+        attrs = campaign_table_attrs
         row_attrs = campaign_table_attrs
 
 

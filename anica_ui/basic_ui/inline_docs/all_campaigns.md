@@ -39,7 +39,7 @@ The closer this metric is to 1.0, the more likely it is to find an interesting b
 The time that passed while performing the discovery campaign.
 
 
-### Comparisons
+### Compare Campaigns
 
 This is a convenience tool to open browser windows for multiple campaigns with plots scaled and prefixes aligned such that they are more easily comparable.
 Just enter the Campaign IDs of all desired campaigns, separated by spaces, and click the button or press enter to confirm.
