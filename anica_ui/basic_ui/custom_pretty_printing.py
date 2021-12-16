@@ -4,6 +4,9 @@ import json
 from django.utils.html import escape
 from django.utils.safestring import mark_safe
 
+from pathlib import Path
+import re
+
 # TODO we might want to use django methods to create this html in the first place
 
 def prettify_absinsn(absinsn, hl_feature=None, skip_top=False):
@@ -179,6 +182,22 @@ def prettify_config_diff(config_diff):
 
     return mark_safe(res)
 
+def prettify_filter_config(f):
+    kind = f["kind"]
+    res_str = kind
+    if kind == 'with_measurements':
+        res_str +=  ': ' + ", ".join(f['archs'])
+    elif kind == 'only_mnemonics':
+        res_str +=  ': ' + ", ".join(f['mnemonics'])
+    elif kind in ['blacklist', 'whitelist']:
+        listpath = Path(f['file_path'])
+        displayed = listpath.name
+        m = re.fullmatch(r"filter_\d+_(.*)\.csv", displayed)
+        if m is not None:
+            displayed = m[1]
+        res_str += ': ' + displayed
+    return res_str
+
 def prettify_abstraction_config(abstraction_config):
     res = "<div class='absconfig'>\n"
 
@@ -195,12 +214,20 @@ def prettify_abstraction_config(abstraction_config):
                 continue
             doc = v.get(f'{ki}.doc', None)
             res += "      <li class='absconfig_li_inner'>"
-            if ki == 'features':
+            if ki == 'features' and k == 'insn_feature_manager':
                 entry_str = f"{ki}:\n"
                 entry_str += "<ul class='absconfig_ul_inner'>\n"
                 for vs in vi:
                     entry_str += "<li class='absconfig_li_inner'>"
                     entry_str += f"{vs[0]}: {json.dumps(vs[1])}"
+                    entry_str += "</li>\n"
+                entry_str += "</ul>\n"
+            elif ki == 'filters' and k == 'iwho':
+                entry_str = f"{ki}:\n"
+                entry_str += "<ul class='absconfig_ul_inner'>\n"
+                for vd in vi:
+                    entry_str += "<li class='absconfig_li_inner'>"
+                    entry_str += prettify_filter_config(vd)
                     entry_str += "</li>\n"
                 entry_str += "</ul>\n"
             else:
