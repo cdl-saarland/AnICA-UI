@@ -6,6 +6,7 @@ import textwrap
 
 from anica.abstractioncontext import AbstractionContext
 from anica.witness import WitnessTrace
+from iwho.configurable import load_json_config
 
 from .custom_pretty_printing import prettify_absblock
 
@@ -15,8 +16,7 @@ def gen_witness_site(campaign_id, witness_path):
     return g.generate()
 
 def load_witness(trfile, actx=None):
-    with open(trfile) as f:
-        json_dict = json.load(f)
+    json_dict = load_json_config(trfile)
 
     if actx is None:
         config_dict = json_dict['config']
@@ -40,11 +40,13 @@ def make_witness_graph(campaign_id, witness):
     parent = g.add_block(text=prettify_absblock(abb), kind="start", link=empty_link)
     g.new_row()
 
+    prev_taken_link = empty_link
+
     for witness in witness.trace:
         meas_id = witness.measurements
 
         if meas_id is None:
-            link = empty_link
+            link = prev_taken_link
         else:
             link = django.urls.reverse('basic_ui:measurements', kwargs={'campaign_id': campaign_id, 'meas_id': meas_id})
 
@@ -61,6 +63,8 @@ def make_witness_graph(campaign_id, witness):
 
             parent = new_node
             g.new_row()
+
+            prev_taken_link = link
         else:
             tmp_abb = deepcopy(abb)
             tmp_abb.apply_expansion(witness.expansion)
