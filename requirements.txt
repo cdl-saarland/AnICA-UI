@@ -5,4 +5,5 @@ django_tables2
 matplotlib
 markdown
 
+-e lib/anica/lib/iwho
 -e lib/anica
