@@ -10,6 +10,10 @@ Click the column title to do so, and click it again to reverse the order.
 This is the unique identifier for the discovery campaign, determined by the order in which the discovery campaigns were imported.
 They link to a view with more details and results for the discovery campaign.
 
+#### Tag
+An identifier associated with a group of campaigns, specified when the campaigns were imported to the UI.
+Click a value to get to a view only showing campaigns with this tag.
+
 #### Start Date
 The date when the discovery campaign was started.
 

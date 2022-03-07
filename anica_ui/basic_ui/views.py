@@ -7,6 +7,7 @@ from django.utils.safestring import mark_safe
 
 from pathlib import Path
 import os
+import urllib
 
 import django_tables2 as tables
 from markdown import markdown
@@ -45,6 +46,9 @@ def get_docs(site_name):
 
     return res
 
+def url_with_querystring(path, **kwargs):
+    return path + '?' + urllib.parse.urlencode(kwargs)
+
 
 campaign_table_attrs = {"class": "campaigntable"}
 
@@ -53,6 +57,10 @@ class CampaignTable(tables.Table):
             linkify=(lambda value: django.urls.reverse('basic_ui:single_campaign', kwargs={'campaign_id': value})),
             attrs={"td": campaign_table_attrs, "th": campaign_table_attrs},
             verbose_name="ID")
+    tag = tables.Column(
+            linkify=(lambda value: url_with_querystring(django.urls.reverse('basic_ui:all_campaigns'), tag=value)),
+            attrs={"td": campaign_table_attrs, "th": campaign_table_attrs},
+            verbose_name="Tag")
     date = tables.Column(attrs={"td": campaign_table_attrs, "th": campaign_table_attrs},
             verbose_name="Start Date")
     host_pc = tables.Column(attrs={"td": campaign_table_attrs, "th": campaign_table_attrs},
@@ -83,7 +91,12 @@ def all_campaigns_view(request):
             ('all campaigns', django.urls.reverse('basic_ui:all_campaigns')),
         ]
 
-    campaigns = Campaign.objects.all()
+    tag_filter = request.GET.get('tag', None)
+    if tag_filter is None:
+        campaigns = Campaign.objects.all()
+    else:
+        campaigns = Campaign.objects.filter(tag=tag_filter)
+        topbarpathlist.append((f"with tag '{tag_filter}'", url_with_querystring(django.urls.reverse('basic_ui:all_campaigns'), tag=tag_filter)))
 
     if len(campaigns) == 0:
         context = {
@@ -124,6 +137,7 @@ def all_campaigns_view(request):
 
         data.append({
             'campaign_id': campaign.id,
+            'tag': campaign.tag,
             'tools': ", ".join(map(str, tool_list)),
             'config_delta': config_delta_html,
             'date': campaign.date,

@@ -23,6 +23,8 @@ class Tool(models.Model):
         return self.full_name
 
 class Campaign(models.Model):
+    tag = models.CharField(max_length=255)
+
     config_dict = models.JSONField()
     tools = models.ManyToManyField(Tool)
     termination_condition = models.JSONField()
@@ -84,7 +86,7 @@ class Witness(models.Model):
     discovery = models.OneToOneField(Discovery, on_delete=models.CASCADE)
 
 
-def import_campaign(campaign_dir):
+def import_campaign(tag, campaign_dir):
     base_dir = Path(campaign_dir)
 
     campaign_config = load_json_config(base_dir / "campaign_config.json")
@@ -106,6 +108,7 @@ def import_campaign(campaign_dir):
     witness_path = str(base_dir / 'witnesses')
 
     campaign = Campaign(
+            tag = tag,
             config_dict = abstraction_config,
             termination_condition = termination_condition,
             date = date,
