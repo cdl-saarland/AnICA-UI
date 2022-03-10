@@ -11,6 +11,8 @@ from pathlib import Path
 import random
 from statistics import geometric_mean
 
+from progress.bar import Bar as ProgressBar
+
 from anica.abstractblock import AbstractBlock
 from anica.abstractioncontext import AbstractionContext
 from iwho.configurable import load_json_config, store_json_config
@@ -67,57 +69,63 @@ def main():
             unsubsumed_absblocks = []
 
             actx = None
-            for fn in os.listdir(base_dir / 'discoveries'):
-                discovery_id, ext = os.path.splitext(fn)
-                assert ext == '.json'
-                full_path = base_dir / 'discoveries' / f'{discovery_id}.json'
 
-                absblock, result_ref = load_absblock(full_path, actx=actx)
-                if actx is None:
-                    actx = absblock.actx
-                    mdb = actx.measurement_db
-                    mdb._init_con()
+            discovery_files = list(os.listdir(base_dir / 'discoveries'))
+            with ProgressBar(f"progress:",
+                    suffix = '%(percent).1f%%',
+                    max=len(discovery_files)) as pb:
+                for fn in discovery_files:
+                    discovery_id, ext = os.path.splitext(fn)
+                    assert ext == '.json'
+                    full_path = base_dir / 'discoveries' / f'{discovery_id}.json'
 
-                with Timer.Sub('get_series'):
-                    # with actx.measurement_db as mdb:
-                    meas_series = mdb.get_series(result_ref)
+                    absblock, result_ref = load_absblock(full_path, actx=actx)
+                    if actx is None:
+                        actx = absblock.actx
+                        mdb = actx.measurement_db
+                        mdb._init_con()
 
-                with Timer.Sub('compute_interestingness'):
-                    # get interestingness
-                    ints = []
-                    for entry in meas_series['measurements']:
-                        eval_res = dict()
-                        for r in entry['predictor_runs']:
-                            eval_res[r['predictor']] = {'TP': r['result']}
-                        ints.append(actx.interestingness_metric.compute_interestingness(eval_res))
+                    with Timer.Sub('get_series'):
+                        # with actx.measurement_db as mdb:
+                        meas_series = mdb.get_series(result_ref)
 
-                if len(ints) == 0 or any(map(lambda x: not math.isfinite(x), ints)) or any(map(lambda x: x <= 0, ints)):
-                    mean_interestingness = math.inf
-                else:
-                    mean_interestingness = geometric_mean(ints)
+                    with Timer.Sub('compute_interestingness'):
+                        # get interestingness
+                        ints = []
+                        for entry in meas_series['measurements']:
+                            eval_res = dict()
+                            for r in entry['predictor_runs']:
+                                eval_res[r['predictor']] = {'TP': r['result']}
+                            ints.append(actx.interestingness_metric.compute_interestingness(eval_res))
 
-                with Timer.Sub('subsumption_check'):
-                    # check if this discovery subsumes any of the previous ones
-                    # The other direction should not be possible, because such
-                    # cases should be prevented by the subsumption check in the
-                    # discovery algorithm.
-                    next_unsubsumed_absblocks = []
-                    for prev_id, prev_ab in unsubsumed_absblocks:
-                        if check_subsumed_aa(prev_ab, absblock):
-                            discovery2metrics[prev_id]['subsumed_by'] = discovery_id
-                            continue
-                        next_unsubsumed_absblocks.append((prev_id, prev_ab))
-                    unsubsumed_absblocks = next_unsubsumed_absblocks
+                    if len(ints) == 0 or any(map(lambda x: not math.isfinite(x), ints)) or any(map(lambda x: x <= 0, ints)):
+                        mean_interestingness = math.inf
+                    else:
+                        mean_interestingness = geometric_mean(ints)
 
-                    unsubsumed_absblocks.append((discovery_id, absblock))
+                    with Timer.Sub('subsumption_check'):
+                        # check if this discovery subsumes any of the previous ones
+                        # The other direction should not be possible, because such
+                        # cases should be prevented by the subsumption check in the
+                        # discovery algorithm.
+                        next_unsubsumed_absblocks = []
+                        for prev_id, prev_ab in unsubsumed_absblocks:
+                            if check_subsumed_aa(prev_ab, absblock):
+                                discovery2metrics[prev_id]['subsumed_by'] = discovery_id
+                                continue
+                            next_unsubsumed_absblocks.append((prev_id, prev_ab))
+                        unsubsumed_absblocks = next_unsubsumed_absblocks
 
-                metrics = {
-                        'mean_interestingness' : mean_interestingness,
-                        'interestingness_series': ints,
-                        'subsumed_by': None,
-                    }
+                        unsubsumed_absblocks.append((discovery_id, absblock))
 
-                discovery2metrics[discovery_id] = metrics
+                    metrics = {
+                            'mean_interestingness' : mean_interestingness,
+                            'interestingness_series': ints,
+                            'subsumed_by': None,
+                        }
+
+                    discovery2metrics[discovery_id] = metrics
+                    pb.next()
 
             mdb._deinit_con()
             store_json_config(discovery2metrics, result_path)
