@@ -69,6 +69,7 @@ def main():
             unsubsumed_absblocks = []
 
             actx = None
+            mdb = None
 
             discovery_files = list(os.listdir(base_dir / 'discoveries'))
             with ProgressBar(f"progress:",
@@ -127,7 +128,8 @@ def main():
                     discovery2metrics[discovery_id] = metrics
                     pb.next()
 
-            mdb._deinit_con()
+            if mdb is not None:
+                mdb._deinit_con()
             store_json_config(discovery2metrics, result_path)
 
     print(timer.get_result())
