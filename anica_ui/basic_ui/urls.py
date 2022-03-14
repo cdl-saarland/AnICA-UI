@@ -9,6 +9,7 @@ urlpatterns = [
     path('campaign/<int:campaign_id>/discoveries/', views.all_discoveries_view, name='all_discoveries'),
     path('campaign/<int:campaign_id>/discoveries/<str:discovery_id>/', views.single_discovery_view, name='single_discovery'),
     path('campaign/<int:campaign_id>/discoveries/<str:discovery_id>/witness', views.witness_view, name='witness'),
+    path('campaign/<int:campaign_id>/measurements-overview/<int:meas_id>', views.measurements_overview_view, name='measurements_overview'),
 
     path('campaign/<int:campaign_id>/discoveries/<str:discovery_id>/absblock.json', views.discovery_json_view, name='discovery_json'),
 

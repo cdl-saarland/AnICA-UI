@@ -17,7 +17,7 @@ from iwho.configurable import config_diff, pretty_print
 
 from .models import Campaign, Discovery, InsnScheme
 from .custom_pretty_printing import prettify_absblock, prettify_seconds, prettify_config_diff, prettify_abstraction_config
-from .witness_site import gen_witness_site, gen_measurement_site
+from .witness_site import gen_witness_site, gen_measurement_site, get_witnessing_series_id
 from .helpers import load_abstract_block
 
 from .plots import *
@@ -406,6 +406,12 @@ def single_discovery_view(request, campaign_id, discovery_id):
             make_interestingness_histogramm_plot(list(discovery_obj.measurement_set.all())),
         ]
 
+
+    example_series_id = -1
+    path = discovery_obj.batch.campaign.witness_path + f'/{discovery_id}.json'
+    if os.path.isfile(path):
+        example_series_id = get_witnessing_series_id(campaign_id, path)
+
     topbarpathlist = [
             ('all campaigns', django.urls.reverse('basic_ui:all_campaigns')),
             (f'campaign {campaign_id}', django.urls.reverse('basic_ui:single_campaign', kwargs={'campaign_id': campaign_id})),
@@ -419,6 +425,7 @@ def single_discovery_view(request, campaign_id, discovery_id):
             'absblock': absblock_html,
             'min_absblock': min_absblock_html,
             'topbarpathlist': topbarpathlist,
+            'example_series_id': example_series_id,
 
             'stats': stats,
             'plots': plots,
@@ -566,6 +573,23 @@ def measurements_view(request, campaign_id, meas_id):
         raise Http404(f"Measurements could not be found.")
 
     return render(request, 'basic_ui/measurements.html', context)
+
+
+def measurements_overview_view(request, campaign_id, meas_id):
+    campaign_obj = get_object_or_404(Campaign, pk=campaign_id)
+
+
+    config = campaign_obj.config_dict
+    config['predmanager'] = None
+    actx = AbstractionContext(config)
+
+    context = gen_measurement_site(actx, meas_id, 3)
+
+    if context is None:
+        raise Http404(f"Measurements could not be found.")
+
+    return render(request, 'basic_ui/measurements.html', context)
+
 
 
 

@@ -27,6 +27,17 @@
         </div>
     </div>
 
+    <h3>Example Results:</h3>
+
+    <iframe id="measurement_overview_iframe" scrolling="no" src="{% url 'basic_ui:measurements_overview' campaign_id example_series_id %}">loading measurements...</iframe>
+
+    <script>
+        var iframe = document.getElementById("measurement_overview_iframe");
+        iframe.onload = function(){
+            iframe.style.height = (iframe.contentWindow.document.body.scrollHeight * 1.04) + 'px';
+        }
+    </script>
+
     <h3>Remarks:</h3>
     <ul>
         {{ remark_text | safe }}

@@ -280,6 +280,10 @@ button {
     text-align: left;
 }
 
+#measurement_overview_iframe {
+    width: 100%;
+    /* border: 1px; */
+}
 
 /* this is used to specify preferred line break locations  */
 span.line {

@@ -15,6 +15,21 @@ def gen_witness_site(campaign_id, witness_path):
     g =  make_witness_graph(campaign_id, tr)
     return g.generate()
 
+
+def get_witnessing_series_id(campaign_id, witness_path):
+    """ Get the measurement series id that corresponds to the terminating
+    abstract block.
+    """
+    res_id = -1
+
+    tr = load_witness(witness_path)
+    for witness, ab in tr.iter(taken_only=True):
+        if witness.measurements is not None:
+            res_id = witness.measurements
+
+    return res_id
+
+
 def load_witness(trfile, actx=None):
     json_dict = load_json_config(trfile)
 
@@ -150,7 +165,7 @@ _measurement_frame = """
       <table class="meastable">
         <tr> <th> assembly </th>
           <td>
-            <div class="asmblock">{asmblock}</div>
+            <div class="asmblock">{{asmblock}}</div>
           </td>
         </tr>
         <tr> <th> hex </th>
@@ -170,8 +185,16 @@ _predictor_run_frame = """
         </tr>
 """
 
+def gen_measurement_site(actx, series_id, choose_only=None):
+    """ Collect the data to show a measurement series (used as an input to
+    render with the measurements.html template).
 
-def gen_measurement_site(actx, series_id):
+    If choose_only is not None, choose (up to) num_examples measurements from
+    the given series in a way that attempts to capture diverse interestingness
+    values and display them like a normal measurement site. Otherwise: show
+    all.
+    """
+
     with actx.measurement_db as mdb:
         measdict = mdb.get_series(series_id)
 
@@ -191,9 +214,6 @@ def gen_measurement_site(actx, series_id):
         meas_id = m.get("measurement_id", "N")
         hexblock = m["input"]
 
-        asmblock = '\n'.join(actx.iwho_ctx.coder.hex2asm(hexblock))
-
-        # asmblock = m.get("asm_str", "ASM not available")
         predictor_run_texts = []
         for r in m["predictor_runs"]:
             predictor_text = ", ".join(r["predictor"]) + ", " + r["uarch"]
@@ -221,12 +241,25 @@ def gen_measurement_site(actx, series_id):
 
         full_predictor_run_text = _predictor_run_frame.format(predictor="interestingness", result=f"{interestingness:.3f}") + full_predictor_run_text
 
-        meas_text = _measurement_frame.format(meas_id=meas_id, asmblock=asmblock, hexblock=hexblock , predictor_runs=full_predictor_run_text)
-        measurement_texts.append((interestingness, meas_text))
+        meas_text = _measurement_frame.format(meas_id=meas_id, hexblock=hexblock , predictor_runs=full_predictor_run_text)
+        measurement_texts.append((interestingness, meas_text, hexblock))
 
     measurement_texts.sort(key=lambda x: x[0], reverse=True)
 
-    full_meas_text = "\n".join(map(lambda x: x[1], measurement_texts))
+    if choose_only is not None:
+        if 1 < choose_only < len(measurement_texts):
+            # take `choose_only` measurements separated by a maximal equal distance `step` from the list
+            step = int((len(measurement_texts) - 1) / (choose_only - 1))
+            measurement_texts = list(measurement_texts[::step])
+
+    measurement_texts_with_asm = []
+    # We postpone creating the ASM representation after filtering because it is
+    # too costly to do unnecessarily.
+    for (interestingness, meas_text, hexblock) in measurement_texts:
+        asmblock = '\n'.join(actx.iwho_ctx.coder.hex2asm(hexblock))
+        measurement_texts_with_asm.append(meas_text.format(asmblock=asmblock))
+
+    full_meas_text = "\n".join(measurement_texts_with_asm)
 
     interesting_percentage = (num_interesting / num_measurements) * 100
 
