@@ -216,7 +216,7 @@ def gen_measurement_site(actx, series_id, choose_only=None):
 
         predictor_run_texts = []
         for r in m["predictor_runs"]:
-            predictor_text = ", ".join(r["predictor"]) + ", " + r["uarch"]
+            predictor_text = r["predictor"]
             results = []
             if r["result"] is not None:
                 results.append(r["result"])

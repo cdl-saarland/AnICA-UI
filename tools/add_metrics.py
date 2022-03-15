@@ -97,7 +97,8 @@ def main():
                             eval_res = dict()
                             for r in entry['predictor_runs']:
                                 eval_res[r['predictor']] = {'TP': r['result']}
-                            ints.append(actx.interestingness_metric.compute_interestingness(eval_res))
+                            interestingness = actx.interestingness_metric.compute_interestingness(eval_res)
+                            ints.append(interestingness)
 
                     if len(ints) == 0 or any(map(lambda x: not math.isfinite(x), ints)) or any(map(lambda x: x <= 0, ints)):
                         mean_interestingness = math.inf
