@@ -42,7 +42,7 @@ def main():
     ap.add_argument('-s', '--seed', type=int, default=424242, metavar="SEED", help="Seed for the random number generator.")
     ap.add_argument('--overwrite', action='store_true', help="if specified, overwrite existing 'metrics.json' files with newly computed data")
 
-    ap.add_argument('--covnum', type=int, default=10000, help="number of samples to use for computing absblock coverage")
+    # ap.add_argument('--covnum', type=int, default=10000, help="number of samples to use for computing absblock coverage")
     ap.add_argument('campaigndirs', metavar='DIR', nargs='+', help='path(s) to a campaign result directory')
 
     args = ap.parse_args()

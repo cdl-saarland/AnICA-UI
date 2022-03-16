@@ -31,8 +31,11 @@ def dry_run_fun(*args, **kwargs):
         print(f"      {k}: {v}")
     return DummyRetVal()
 
+repo_base = Path(__file__).parent.parent
+add_metrics_command =  repo_base / 'tools' / 'add_metrics.py'
+import_command =  repo_base / 'anica_ui' / 'manage.py'
 
-def handle_location(location, target_dir):
+def handle_location(location, target_dir, add_metrics=False, import_name=None):
 
     run_fun = dry_run_fun
     run_fun = subprocess.run
@@ -86,6 +89,23 @@ def handle_location(location, target_dir):
         cmd = ["ssh", url, remote_command]
         run_fun(cmd, check=True)
 
+        if add_metrics:
+            cmd = [add_metrics_command]
+            dirs = list(map(str, local_target_dir.glob('*/')))
+            cmd += dirs
+            print("  - adding metrics to the following campaign directories:")
+            for d in dirs:
+                print(f"    - {d}")
+            run_fun(cmd, check=True)
+
+            if import_name is not None:
+                tag = import_name.format(name=name)
+                print(f"  - importing the campaigns under the tag '{tag}'")
+                cmd = [import_command, 'import_campaign']
+                cmd.append(tag)
+                cmd += dirs
+                run_fun(cmd, check=True)
+
     except subprocess.CalledProcessError as e:
         print("command failed!")
         return False
@@ -99,10 +119,20 @@ def main():
     argparser.add_argument('-c', '--config', metavar="CONFIG", default=None,
         help='a location config file')
 
+    argparser.add_argument('-a', '--add-metrics', action="store_true",
+        help='do the add_metrics post-processing on the downloaded campaigns')
+
+    argparser.add_argument('-i', '--import-name', metavar="TAG", defaut=None
+            help='import the downloaded campaigns with the specified tag to the ui. Requires -a. The tag can include a "{name}" place holder that is replaced with the corresponding name from the config. For example: "bughunt:{name}"')
+
     argparser.add_argument('-o', '--output', metavar="OUTFILE", default="./results",
         help='the directory to store the fetched runs')
 
     args = argparser.parse_args()
+
+    if args.import_name is not None and not args.add_metrics:
+        print("This script will only import campaigns with metrics added, add '-a' to do that.", file=sys.err)
+        sys.exit(1)
 
     location_config = args.config
     if location_config is None:
@@ -118,7 +148,7 @@ def main():
     target_dir = Path(args.output)
 
     for location in locations:
-        handle_location(location, target_dir)
+        handle_location(location, target_dir, add_metrics=args.add_metrics, import_name=args.import_name)
 
     return 0
 
