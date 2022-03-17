@@ -15,6 +15,12 @@ The left, *original* abstract block is the direct result of the generalization a
 The right, *narrowed* one is equivalent to the left one (i.e. its abstract instructions represent the same sets of instruction schemes), but the abstract instructions have been made as specific as possible.
 This narrowing may ease interpreting the abstract block for humans.
 
+### Example Results
+Here, a small number of basic blocks that were sampled from the discovery with the corresponding predictions are shown.
+They are selected somewhat evenly wrt. interestingness from all sampled basic blocks.
+
+For more results, view the corresponding witness page and click on the relevant abstract block of interest to open its measurement site in a side view.
+
 ### Remarks
 This section displays more or less notable occurrences in the generalization of this discovery.
 
@@ -28,8 +34,6 @@ This section contains metrics for the discovery:
 
   - geomean interestingness: The geometric mean of the interestingnesses of a group of blocks sampled from the represented concrete basic blocks of this abstract block.
     The higher this value, the more dramatic is the deviation between the tools under investigation (may be infinite if at least one of the tools crashes).
-  - sample coverage: The (approximated) ratio of samples from the universe of basic blocks (with the same number of instructions as this abstract block) that are represented by this discovery.
-    The higher this ratio, the more general is this abstract block.
   - generality: The minimum number of instruction schemes represented by an abstract instruction of the abstract block.
     The larger this is, the more basic blocks are characterized as interesting by this discovery.
   - witness length: The length of the witness for the generalization of this discovery.
