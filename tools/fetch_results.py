@@ -91,7 +91,7 @@ def handle_location(location, target_dir, add_metrics=False, import_name=None):
 
         if add_metrics:
             cmd = [add_metrics_command]
-            dirs = list(map(str, local_target_dir.glob('*/')))
+            dirs = list(sorted(map(str, filter(lambda x: x.is_dir(), local_target_dir.glob('*')))))
             cmd += dirs
             print("  - adding metrics to the following campaign directories:")
             for d in dirs:
@@ -122,7 +122,7 @@ def main():
     argparser.add_argument('-a', '--add-metrics', action="store_true",
         help='do the add_metrics post-processing on the downloaded campaigns')
 
-    argparser.add_argument('-i', '--import-name', metavar="TAG", defaut=None
+    argparser.add_argument('-i', '--import-name', metavar="TAG", default=None,
             help='import the downloaded campaigns with the specified tag to the ui. Requires -a. The tag can include a "{name}" place holder that is replaced with the corresponding name from the config. For example: "bughunt:{name}"')
 
     argparser.add_argument('-o', '--output', metavar="OUTFILE", default="./results",
