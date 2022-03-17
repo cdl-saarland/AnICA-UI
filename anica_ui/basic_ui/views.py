@@ -400,7 +400,7 @@ def single_discovery_view(request, campaign_id, discovery_id):
         ]
 
     if subsumed_by is not None:
-        stats.append('subsumed by', subsumed_by)
+        stats.append(('subsumed by', subsumed_by))
 
     plots = [
             make_interestingness_histogramm_plot(list(discovery_obj.measurement_set.all())),
@@ -457,7 +457,13 @@ class InsnSchemeTable(tables.Table):
 
 
 def all_insnschemes_view(request, campaign_id):
-    insnscheme_objs = InsnScheme.objects.filter(discovery__batch__campaign_id=campaign_id).distinct().order_by('text')
+    show_subsumed = request.GET.get('show_subsumed', '0')
+    show_subsumed = (show_subsumed != '0')
+
+    if show_subsumed:
+        insnscheme_objs = InsnScheme.objects.filter(discovery__batch__campaign_id=campaign_id).distinct().order_by('text')
+    else:
+        insnscheme_objs = InsnScheme.objects.filter(discovery__batch__campaign_id=campaign_id, discovery__subsumed_by=None).distinct().order_by('text')
 
     extra_cols = []
 
@@ -470,7 +476,10 @@ def all_insnschemes_view(request, campaign_id):
     possible_num_insns = list(map(lambda x: x['num_insns'], Discovery.objects.filter(batch__campaign_id=campaign_id).values('num_insns').distinct().order_by('num_insns')))
     for num_insns in possible_num_insns:
         field_name = f"discovery_count_{num_insns}"
-        kwargs = {field_name: Count('discovery', filter=Q(discovery__num_insns=num_insns))}
+        if show_subsumed:
+            kwargs = {field_name: Count('discovery', filter=Q(discovery__num_insns=num_insns))}
+        else:
+            kwargs = {field_name: Count('discovery', filter=Q(discovery__num_insns=num_insns, discovery__subsumed_by=None))}
         insnscheme_objs = insnscheme_objs.annotate(**kwargs)
         extra_cols.append( (field_name, tables.Column(accessor=field_name,
         attrs={"td": insnscheme_table_attrs, "th": insnscheme_table_attrs},
@@ -499,9 +508,15 @@ def all_insnschemes_view(request, campaign_id):
 
 
 def single_insnscheme_view(request, campaign_id, ischeme_id):
+    show_subsumed = request.GET.get('show_subsumed', '0')
+    show_subsumed = (show_subsumed != '0')
+
     ischeme_obj = get_object_or_404(InsnScheme, pk=ischeme_id)
 
-    discoveries = ischeme_obj.discovery_set.filter(batch__campaign_id=campaign_id)
+    if show_subsumed:
+        discoveries = ischeme_obj.discovery_set.filter(batch__campaign_id=campaign_id)
+    else:
+        discoveries = ischeme_obj.discovery_set.filter(batch__campaign_id=campaign_id, subsumed_by=None)
 
     table = DiscoveryTable(discoveries)
 
