@@ -15,7 +15,7 @@ from markdown import markdown
 from anica.abstractioncontext import AbstractionContext
 from iwho.configurable import config_diff, pretty_print
 
-from .models import Campaign, Discovery, InsnScheme
+from .models import Campaign, Discovery, InsnScheme, Generalization
 from .custom_pretty_printing import prettify_absblock, prettify_seconds, prettify_config_diff, prettify_abstraction_config
 from .witness_site import gen_witness_site, gen_measurement_site, get_witnessing_series_id
 from .helpers import load_abstract_block
@@ -49,6 +49,11 @@ def get_docs(site_name):
 def url_with_querystring(path, **kwargs):
     return path + '?' + urllib.parse.urlencode(kwargs)
 
+def tool_str_for(campaign_id):
+    campaign_obj = get_object_or_404(Campaign, pk=campaign_id)
+    tool_list = campaign_obj.tools.all()
+    tool_str = " vs. ".join(map(str, tool_list))
+    return tool_str
 
 campaign_table_attrs = {"class": "campaigntable"}
 
@@ -247,7 +252,7 @@ def single_campaign_view(request, campaign_id):
 
     topbarpathlist = [
             ('all campaigns', django.urls.reverse('basic_ui:all_campaigns')),
-            (f'campaign {campaign_id}', django.urls.reverse('basic_ui:single_campaign', kwargs={'campaign_id': campaign_id})),
+            (f'campaign {campaign_id} ({tool_str_for(campaign_id)})', django.urls.reverse('basic_ui:single_campaign', kwargs={'campaign_id': campaign_id})),
         ]
 
     if num_discoveries == 0:
@@ -279,7 +284,6 @@ def single_campaign_view(request, campaign_id):
             make_discoveries_per_batch_plot(batches, cmp_batches),
             make_generality_histogramm_plot(relevant_discoveries, cmp_discoveries),
         ]
-
 
     context = {
             'campaign': campaign_obj,
@@ -357,7 +361,7 @@ def all_discoveries_view(request, campaign_id):
 
     topbarpathlist = [
             ('all campaigns', django.urls.reverse('basic_ui:all_campaigns')),
-            (f'campaign {campaign_id}', django.urls.reverse('basic_ui:single_campaign', kwargs={'campaign_id': campaign_id})),
+            (f'campaign {campaign_id} ({tool_str_for(campaign_id)})', django.urls.reverse('basic_ui:single_campaign', kwargs={'campaign_id': campaign_id})),
             ('all discoveries', django.urls.reverse('basic_ui:all_discoveries', kwargs={'campaign_id': campaign_id})),
         ]
 
@@ -410,11 +414,11 @@ def single_discovery_view(request, campaign_id, discovery_id):
     example_series_id = -1
     path = discovery_obj.batch.campaign.witness_path + f'/{discovery_id}.json'
     if os.path.isfile(path):
-        example_series_id = get_witnessing_series_id(campaign_id, path)
+        example_series_id = get_witnessing_series_id(path)
 
     topbarpathlist = [
             ('all campaigns', django.urls.reverse('basic_ui:all_campaigns')),
-            (f'campaign {campaign_id}', django.urls.reverse('basic_ui:single_campaign', kwargs={'campaign_id': campaign_id})),
+            (f'campaign {campaign_id} ({tool_str_for(campaign_id)})', django.urls.reverse('basic_ui:single_campaign', kwargs={'campaign_id': campaign_id})),
             ('all discoveries', django.urls.reverse('basic_ui:all_discoveries', kwargs={'campaign_id': campaign_id})),
             (f'discovery {discovery_id}', django.urls.reverse('basic_ui:single_discovery', kwargs={'campaign_id': campaign_id, 'discovery_id': discovery_id}))
         ]
@@ -493,7 +497,7 @@ def all_insnschemes_view(request, campaign_id):
 
     topbarpathlist = [
             ('all campaigns', django.urls.reverse('basic_ui:all_campaigns')),
-            (f'campaign {campaign_id}', django.urls.reverse('basic_ui:single_campaign', kwargs={'campaign_id': campaign_id})),
+            (f'campaign {campaign_id} ({tool_str_for(campaign_id)})', django.urls.reverse('basic_ui:single_campaign', kwargs={'campaign_id': campaign_id})),
             ('all InsnSchemes', django.urls.reverse('basic_ui:all_insnschemes', kwargs={'campaign_id': campaign_id})),
         ]
 
@@ -524,7 +528,7 @@ def single_insnscheme_view(request, campaign_id, ischeme_id):
 
     topbarpathlist = [
             ('all campaigns', django.urls.reverse('basic_ui:all_campaigns')),
-            (f'campaign {campaign_id}', django.urls.reverse('basic_ui:single_campaign', kwargs={'campaign_id': campaign_id})),
+            (f'campaign {campaign_id} ({tool_str_for(campaign_id)})', django.urls.reverse('basic_ui:single_campaign', kwargs={'campaign_id': campaign_id})),
             ('all InsnSchemes', django.urls.reverse('basic_ui:all_insnschemes', kwargs={'campaign_id': campaign_id})),
             (f'InsnScheme \'{ischeme_obj.text}\'', django.urls.reverse('basic_ui:single_insnscheme', kwargs={'campaign_id': campaign_id, 'ischeme_id': ischeme_id})),
         ]
@@ -537,6 +541,211 @@ def single_insnscheme_view(request, campaign_id, ischeme_id):
     context.update(get_docs('single_insnscheme'))
 
     return render(request, "basic_ui/data_table.html", context)
+
+gen_table_attrs = {"class": "campaigntable"}
+
+class GeneralizationTable(tables.Table):
+    generalization_id = tables.Column(
+            linkify=(lambda value: django.urls.reverse('basic_ui:single_generalization', kwargs={'generalization_id': value})),
+            attrs={"td": gen_table_attrs, "th": gen_table_attrs},
+            verbose_name="ID")
+    tools = tables.Column(attrs={"td": gen_table_attrs, "th": gen_table_attrs},
+            verbose_name="Tools under Investigation")
+    absblock = tables.Column(
+            attrs={"td": gen_table_attrs, "th": gen_table_attrs},
+            verbose_name="Abstract Block")
+    num_insns = tables.Column(
+            attrs={"td": gen_table_attrs, "th": gen_table_attrs},
+            verbose_name="# Instructions", empty_values=())
+    interestingness = tables.Column(
+            attrs={"td": gen_table_attrs, "th": gen_table_attrs},
+            verbose_name="Mean Interestingness")
+    generality = tables.Column(
+            attrs={"td": gen_table_attrs, "th": gen_table_attrs},
+            verbose_name="Generality")
+    witness_len = tables.Column(
+            attrs={"td": gen_table_attrs, "th": gen_table_attrs},
+            verbose_name="Witness Length")
+
+    def render_absblock(self, value):
+        # TODO storing the AbstractionContext here is somewhat ugly, but it is
+        # a lot faster than recreating it every time.
+        actx = getattr(self, '_actx', None)
+        res = load_abstract_block(value, actx)
+        if actx is None:
+            self._actx = res.actx
+        return prettify_absblock(res, skip_top=True)
+
+    def render_interestingness(self, value):
+        return "{:.2f}".format(value)
+
+    class Meta:
+        attrs = gen_table_attrs
+        row_attrs = gen_table_attrs
+
+
+def all_generalizations_view(request):
+    topbarpathlist = [
+            ('manual generalizations', django.urls.reverse('basic_ui:all_generalizations')),
+        ]
+
+    generalizations = Generalization.objects.all()
+
+    if len(generalizations) == 0:
+        context = {
+                "title": "Manual Generalizations",
+                'topbarpathlist': topbarpathlist,
+            }
+        context.update(get_docs('all_generalizations'))
+        return render(request, "basic_ui/all_generalizations_empty.html", context)
+
+    assert len(generalizations) > 0
+
+    data = []
+    for generalization in generalizations:
+        tool_list = generalization.tools.all()
+
+        data.append({
+            'generalization_id': generalization.id,
+            'tools': ", ".join(map(str, tool_list)),
+            'absblock': generalization.absblock,
+            'interestingness': generalization.interestingness,
+            'generality': generalization.generality,
+            'witness_len': generalization.witness_len,
+        })
+
+    table = GeneralizationTable(data)
+
+    tables.RequestConfig(request).configure(table)
+
+    context = {
+        "title": "All Generalizations",
+        "table": table,
+        'topbarpathlist': topbarpathlist,
+    }
+
+    context.update(get_docs('all_generalizations'))
+
+    return render(request, "basic_ui/all_generalizations.html",  context)
+
+def generalization_json_view(request, generalization_id):
+    gen_obj = get_object_or_404(Generalization, id=generalization_id)
+    json_content = pretty_print(gen_obj.absblock)
+    return HttpResponse(json_content, content_type="text/plain")
+
+def single_generalization_view(request, generalization_id):
+    gen_obj = get_object_or_404(Generalization, id=generalization_id)
+
+    absblock = load_abstract_block(gen_obj.absblock, None)
+
+    absblock_html = prettify_absblock(absblock, add_schemes=True)
+
+    cfg_str = prettify_abstraction_config(absblock.actx.get_config())
+
+    min_absblock_html = prettify_absblock(absblock.minimize(), add_schemes=True)
+
+    mean_interestingness = gen_obj.interestingness
+    witness_length = gen_obj.witness_len
+    generality = gen_obj.generality
+
+    remark_text = gen_obj.remarks
+    if remark_text is None:
+        remark_text = "No remarks."
+
+    stats = [
+            ('geomean interestingness', mean_interestingness),
+            ('generality', generality),
+            ('witness length', witness_length),
+        ]
+
+    plots = [
+        ]
+
+    example_series_id = -1
+    path = gen_obj.witness_file
+    if os.path.isfile(path):
+        example_series_id = get_witnessing_series_id(path)
+
+    topbarpathlist = [
+            ('manual generalizations', django.urls.reverse('basic_ui:all_generalizations')),
+            (f'generalization {generalization_id}', django.urls.reverse('basic_ui:single_generalization', kwargs={'generalization_id': generalization_id}))
+        ]
+
+    context = {
+            'generalization_id': generalization_id,
+            'absblock': absblock_html,
+            'min_absblock': min_absblock_html,
+            'topbarpathlist': topbarpathlist,
+            'example_series_id': example_series_id,
+            'abstraction_config': cfg_str,
+
+            'stats': stats,
+            'plots': plots,
+            'remark_text': remark_text,
+        }
+    context.update(get_docs('single_discovery')) # TODO add docs
+
+    return render(request, 'basic_ui/single_generalization_view.html', context)
+
+def gen_measurements_view(request, generalization_id, meas_id):
+    gen_obj = get_object_or_404(Generalization, pk=generalization_id)
+
+    config = gen_obj.absblock.get('config', {})
+    config['predmanager'] = None
+    actx = AbstractionContext(config)
+
+    context = gen_measurement_site(actx, meas_id)
+
+    if context is None:
+        raise Http404(f"Measurements could not be found.")
+
+    return render(request, 'basic_ui/measurements.html', context)
+
+def gen_witness_view(request, generalization_id):
+    gen_obj = get_object_or_404(Generalization, pk=generalization_id)
+
+    # We don't add the witness data into the django database but rather just
+    # refer to the original location. This is probably a bad design, but
+    # simplifies things in the project import. It probably also causes security
+    # risks.
+    path = gen_obj.witness_file
+
+    if not os.path.isfile(path):
+        raise Http404(f"Witness trace could not be found.")
+
+
+    def mk_meas_link(meas_id):
+        return django.urls.reverse('basic_ui:gen_measurements', kwargs={'generalization_id': generalization_id, 'meas_id': meas_id})
+
+    witness_site = gen_witness_site(path, mk_meas_link)
+
+    topbarpathlist = [
+            ('manual generalizations', django.urls.reverse('basic_ui:all_generalizations')),
+            (f'generalization {generalization_id}', django.urls.reverse('basic_ui:single_generalization', kwargs={'generalization_id': generalization_id})),
+            (f'witness', django.urls.reverse('basic_ui:gen_witness', kwargs={'generalization_id': generalization_id})),
+        ]
+
+    context = {
+            'topbarpathlist': topbarpathlist,
+        }
+    context.update(witness_site)
+    context.update(get_docs('witness'))
+
+    return render(request, 'basic_ui/witness.html', context)
+
+def gen_measurements_overview_view(request, generalization_id, meas_id):
+    gen_obj = get_object_or_404(Generalization, pk=generalization_id)
+
+    config = gen_obj.absblock.get('config', {})
+    config['predmanager'] = None
+    actx = AbstractionContext(config)
+
+    context = gen_measurement_site(actx, meas_id, 3)
+
+    if context is None:
+        raise Http404(f"Measurements could not be found.")
+
+    return render(request, 'basic_ui/measurements.html', context)
 
 
 def witness_view(request, campaign_id, discovery_id):
@@ -551,11 +760,14 @@ def witness_view(request, campaign_id, discovery_id):
     if not os.path.isfile(path):
         raise Http404(f"Witness trace could not be found.")
 
-    witness_site = gen_witness_site(campaign_id, path)
+    def mk_meas_link(meas_id):
+        return django.urls.reverse('basic_ui:measurements', kwargs={'campaign_id': campaign_id, 'meas_id': meas_id})
+
+    witness_site = gen_witness_site(path, mk_meas_link)
 
     topbarpathlist = [
             ('all campaigns', django.urls.reverse('basic_ui:all_campaigns')),
-            (f'campaign {campaign_id}', django.urls.reverse('basic_ui:single_campaign', kwargs={'campaign_id': campaign_id})),
+            (f'campaign {campaign_id} ({tool_str_for(campaign_id)})', django.urls.reverse('basic_ui:single_campaign', kwargs={'campaign_id': campaign_id})),
             ('all discoveries', django.urls.reverse('basic_ui:all_discoveries', kwargs={'campaign_id': campaign_id})),
             (f'discovery {discovery_id}', django.urls.reverse('basic_ui:single_discovery', kwargs={'campaign_id': campaign_id, 'discovery_id': discovery_id})),
             (f'witness', django.urls.reverse('basic_ui:witness', kwargs={'campaign_id': campaign_id, 'discovery_id': discovery_id})),

@@ -1,0 +1,71 @@
+{% extends "basic_ui/base.html" %}
+
+{% load static %}
+
+{% block stylesheets %}
+    <link rel="stylesheet" type="text/css" href="{% static 'basic_ui/tooltips.css' %}">
+{% endblock %}
+
+{% block title %}Single Generalization{% endblock %}
+
+{% block content %}
+    <h3>Discovery:</h3>
+    <div style="display:flex;">
+        <div style="flex: 0 0 50%;">
+            <h4>Original Abstract Block: [<a href="{% url 'basic_ui:generalization_json' generalization_id %}">raw json</a>] </h4>
+            <div class="indent_content">
+            {{ absblock | safe }}
+            </div>
+
+        </div>
+
+        <div style="flex: 1;">
+            <h4>Narrowed Abstract Block:</h4>
+            <div class="indent_content">
+            {{ min_absblock | safe }}
+            </div>
+        </div>
+    </div>
+
+    <h3>Example Results:</h3>
+
+    {% if example_series_id != -1 %}
+        <iframe id="measurement_overview_iframe" scrolling="no" src="{% url 'basic_ui:gen_measurements_overview' generalization_id example_series_id %}">loading measurements...</iframe>
+
+        <script>
+            var iframe = document.getElementById("measurement_overview_iframe");
+            iframe.onload = function(){
+                iframe.style.height = (iframe.contentWindow.document.body.scrollHeight * 1.04) + 'px';
+            }
+        </script>
+    {% else %}
+        Not available.
+    {% endif %}
+
+    <h3>Remarks:</h3>
+    <ul>
+        {{ remark_text | safe }}
+    </ul>
+
+    <h3>Metrics:</h3>
+    <table>
+        {% for key, value in stats %}
+            <tr>
+                <td>{{key}}:</td><td>{{value}}</td>
+            </tr>
+        {% endfor %}
+    </table>
+
+    <h3>Witness:</h3>
+    <ul>
+        <li>
+            <a href='{% url 'basic_ui:gen_witness' generalization_id %}'>Click here to open.</a>
+        </li>
+    </ul>
+
+    <h3>Abstraction Config:</h3>
+        {{ abstraction_config | safe }}
+
+
+{% endblock %}
+

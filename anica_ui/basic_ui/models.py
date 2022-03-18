@@ -86,6 +86,16 @@ class Witness(models.Model):
     discovery = models.OneToOneField(Discovery, on_delete=models.CASCADE)
 
 
+class Generalization(models.Model):
+    absblock = models.JSONField()
+    tools = models.ManyToManyField(Tool)
+    witness_file = models.CharField(max_length=2048)
+    witness_len = models.IntegerField()
+    interestingness = models.FloatField(null=True)
+    generality = models.IntegerField()
+    remarks = models.TextField(null=True)
+
+
 def import_campaign(tag, campaign_dir):
     base_dir = Path(campaign_dir)
 
@@ -105,7 +115,11 @@ def import_campaign(tag, campaign_dir):
 
     tool_objs = [Tool.objects.get_or_create(full_name=tool_name, defaults={})[0] for tool_name in tools]
 
-    witness_path = str(base_dir / 'witnesses')
+    # The better way would probably be to move/copy the files into the django
+    # app's working space and to make this path relative to a fixed base. This
+    # here breaks if the imported campaign directories are deleted or moved
+    # around.
+    witness_path = str((base_dir / 'witnesses').resolve())
 
     campaign = Campaign(
             tag = tag,
@@ -266,6 +280,63 @@ def import_campaign(tag, campaign_dir):
     Measurement.objects.bulk_create(measurement_objs)
     discovery2ischeme_cls.objects.bulk_create(through_objs)
 
+
+def import_generalization(gen_dir):
+    base_dir = Path(gen_dir)
+
+    infos = load_json_config(base_dir / "infos.json")
+
+    witness_len = infos['witness_len']
+
+    tools = infos['predictors']
+    tool_objs = [Tool.objects.get_or_create(full_name=tool_name, defaults={})[0] for tool_name in tools]
+
+    # The better way would probably be to move/copy the files into the django
+    # app's working space and to make this path relative to a fixed base. This
+    # here breaks if the imported campaign directories are deleted or moved
+    # around.
+    witness_file = str((base_dir / 'witness.json').resolve())
+
+    ab_path = base_dir / 'discovery.json'
+    absblock = load_json_config(ab_path)
+    clear_doc_entries(absblock)
+
+    remarks = absblock.get('remarks', None)
+    if remarks is None:
+        remark_text = None
+    else:
+        remark_strs = []
+        for r in remarks:
+            if isinstance(r, str):
+                remark_str = r
+            else:
+                assert isinstance(r, tuple) or isinstance(r, list)
+                remark_str = r[0].format(*r[1:])
+            remark_strs.append("<li>{}</li>".format(remark_str))
+        remark_text = "\n".join(remark_strs)
+
+
+    ab = load_abstract_block(absblock, actx=None)
+    actx = ab.actx
+
+    generality = math.inf
+    for ai in ab.abs_insns:
+        feasible_schemes = actx.insn_feature_manager.compute_feasible_schemes(ai.features)
+        generality = min(generality, len(feasible_schemes))
+
+    generalization = Generalization(
+            absblock = absblock,
+            witness_file = witness_file,
+            witness_len = witness_len,
+            interestingness = None,
+            generality = generality,
+            remarks = remark_text,
+        )
+
+    generalization.save()
+
+    for t in tool_objs:
+        generalization.tools.add(t.id)
 
 
 def clear_doc_entries(json_dict):

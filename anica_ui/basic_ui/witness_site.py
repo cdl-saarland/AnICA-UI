@@ -10,13 +10,13 @@ from iwho.configurable import load_json_config
 
 from .custom_pretty_printing import prettify_absblock
 
-def gen_witness_site(campaign_id, witness_path):
+def gen_witness_site(witness_path, mk_meas_link):
     tr = load_witness(witness_path)
-    g =  make_witness_graph(campaign_id, tr)
+    g =  make_witness_graph(tr, mk_meas_link)
     return g.generate()
 
 
-def get_witnessing_series_id(campaign_id, witness_path):
+def get_witnessing_series_id(witness_path):
     """ Get the measurement series id that corresponds to the terminating
     abstract block.
     """
@@ -43,7 +43,7 @@ def load_witness(trfile, actx=None):
     tr = WitnessTrace.from_json_dict(actx, tr_dict)
     return tr
 
-def make_witness_graph(campaign_id, witness):
+def make_witness_graph(witness, mk_meas_link):
     actx = witness.start.actx
 
     g = HTMLGraph("AnICA Visualization", actx=actx)
@@ -63,7 +63,7 @@ def make_witness_graph(campaign_id, witness):
         if meas_id is None:
             link = prev_taken_link
         else:
-            link = django.urls.reverse('basic_ui:measurements', kwargs={'campaign_id': campaign_id, 'meas_id': meas_id})
+            link = mk_meas_link(meas_id)
 
         if witness.terminate:
             new_node = g.add_block(text="Terminated: " + witness.comment, kind="end", link=link)
