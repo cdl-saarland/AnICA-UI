@@ -416,6 +416,10 @@ def single_discovery_view(request, campaign_id, discovery_id):
     if os.path.isfile(path):
         example_series_id = get_witnessing_series_id(path)
 
+    input_id = discovery_obj.identifier.rsplit('_', 1)[0]
+    related_generalizations = Discovery.objects.filter(batch__campaign_id=campaign_id, identifier__startswith=input_id).exclude(identifier=discovery_obj.identifier)
+    table = DiscoveryTable(related_generalizations)
+
     topbarpathlist = [
             ('all campaigns', django.urls.reverse('basic_ui:all_campaigns')),
             (f'campaign {campaign_id} ({tool_str_for(campaign_id)})', django.urls.reverse('basic_ui:single_campaign', kwargs={'campaign_id': campaign_id})),
@@ -430,6 +434,7 @@ def single_discovery_view(request, campaign_id, discovery_id):
             'min_absblock': min_absblock_html,
             'topbarpathlist': topbarpathlist,
             'example_series_id': example_series_id,
+            'table': table,
 
             'stats': stats,
             'plots': plots,

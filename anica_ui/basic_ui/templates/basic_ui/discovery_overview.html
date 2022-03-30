@@ -2,6 +2,8 @@
 
 {% load static %}
 
+{% load django_tables2 %}
+
 {% block stylesheets %}
     <link rel="stylesheet" type="text/css" href="{% static 'basic_ui/tooltips.css' %}">
 {% endblock %}
@@ -70,5 +72,8 @@
         </li>
     </ul>
 
+    <h3>Related Generalizations:</h3>
+
+    {% render_table table %}
 
 {% endblock %}

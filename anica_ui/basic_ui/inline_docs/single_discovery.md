@@ -51,3 +51,7 @@ For a more detailed overview, this section displays plots concerning the propert
 ### Witness
 This link leads to a site detailing how this discovery has been generalized from a concrete basic block.
 
+### Related Generalizations
+This list contains discoveries that were generalized from the same concrete basic block.
+They will be similar in nature, but might cover different sets of instructions due to different randomized generalization decisions.
+
