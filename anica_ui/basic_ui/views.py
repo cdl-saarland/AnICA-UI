@@ -547,7 +547,7 @@ def single_insnscheme_view(request, campaign_id, ischeme_id):
 
     return render(request, "basic_ui/data_table.html", context)
 
-gen_table_attrs = {"class": "campaigntable"}
+gen_table_attrs = {"class": "discoverytable"}
 
 class GeneralizationTable(tables.Table):
     generalization_id = tables.Column(
