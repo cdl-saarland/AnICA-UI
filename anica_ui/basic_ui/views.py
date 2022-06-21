@@ -591,14 +591,14 @@ class GeneralizationTable(tables.Table):
 
 def all_generalizations_view(request):
     topbarpathlist = [
-            ('manual generalizations', django.urls.reverse('basic_ui:all_generalizations')),
+            ('individual generalizations', django.urls.reverse('basic_ui:all_generalizations')),
         ]
 
     generalizations = Generalization.objects.all()
 
     if len(generalizations) == 0:
         context = {
-                "title": "Manual Generalizations",
+                "title": "Individual Generalizations",
                 'topbarpathlist': topbarpathlist,
             }
         context.update(get_docs('all_generalizations'))
@@ -672,7 +672,7 @@ def single_generalization_view(request, generalization_id):
         example_series_id = get_witnessing_series_id(path)
 
     topbarpathlist = [
-            ('manual generalizations', django.urls.reverse('basic_ui:all_generalizations')),
+            ('individual generalizations', django.urls.reverse('basic_ui:all_generalizations')),
             (f'generalization {generalization_id}', django.urls.reverse('basic_ui:single_generalization', kwargs={'generalization_id': generalization_id}))
         ]
 
@@ -725,7 +725,7 @@ def gen_witness_view(request, generalization_id):
     witness_site = gen_witness_site(path, mk_meas_link)
 
     topbarpathlist = [
-            ('manual generalizations', django.urls.reverse('basic_ui:all_generalizations')),
+            ('individual generalizations', django.urls.reverse('basic_ui:all_generalizations')),
             (f'generalization {generalization_id}', django.urls.reverse('basic_ui:single_generalization', kwargs={'generalization_id': generalization_id})),
             (f'witness', django.urls.reverse('basic_ui:gen_witness', kwargs={'generalization_id': generalization_id})),
         ]
