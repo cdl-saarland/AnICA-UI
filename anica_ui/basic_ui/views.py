@@ -554,6 +554,9 @@ class GeneralizationTable(tables.Table):
             linkify=(lambda value: django.urls.reverse('basic_ui:single_generalization', kwargs={'generalization_id': value})),
             attrs={"td": gen_table_attrs, "th": gen_table_attrs},
             verbose_name="ID")
+    identifier = tables.Column(
+            attrs={"td": gen_table_attrs, "th": gen_table_attrs},
+            verbose_name="Name")
     tools = tables.Column(attrs={"td": gen_table_attrs, "th": gen_table_attrs},
             verbose_name="Tools under Investigation")
     absblock = tables.Column(
@@ -562,9 +565,9 @@ class GeneralizationTable(tables.Table):
     num_insns = tables.Column(
             attrs={"td": gen_table_attrs, "th": gen_table_attrs},
             verbose_name="# Instructions", empty_values=())
-    interestingness = tables.Column(
-            attrs={"td": gen_table_attrs, "th": gen_table_attrs},
-            verbose_name="Mean Interestingness")
+    # interestingness = tables.Column(
+    #         attrs={"td": gen_table_attrs, "th": gen_table_attrs},
+    #         verbose_name="Mean Interestingness")
     generality = tables.Column(
             attrs={"td": gen_table_attrs, "th": gen_table_attrs},
             verbose_name="Generality")
@@ -614,9 +617,10 @@ def all_generalizations_view(request):
             'generalization_id': generalization.id,
             'tools': ", ".join(map(str, tool_list)),
             'absblock': generalization.absblock,
-            'interestingness': generalization.interestingness,
+            # 'interestingness': generalization.interestingness,
             'generality': generalization.generality,
             'witness_len': generalization.witness_len,
+            'num_insns': generalization.num_insns,
         })
 
     table = GeneralizationTable(data)

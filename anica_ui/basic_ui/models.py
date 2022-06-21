@@ -94,6 +94,8 @@ class Generalization(models.Model):
     interestingness = models.FloatField(null=True)
     generality = models.IntegerField()
     remarks = models.TextField(null=True)
+    identifier = models.CharField(max_length=256, null=True)
+    num_insns = models.IntegerField()
 
 
 def import_campaign(tag, campaign_dir):
@@ -286,6 +288,9 @@ def import_generalization(gen_dir):
 
     infos = load_json_config(base_dir / "infos.json")
 
+    # this is an optional entry that needs to be added manually, to refer to specific generalizations
+    identifier = infos.get('identifier', None)
+
     witness_len = infos['witness_len']
 
     tools = infos['predictors']
@@ -324,6 +329,8 @@ def import_generalization(gen_dir):
         feasible_schemes = actx.insn_feature_manager.compute_feasible_schemes(ai.features)
         generality = min(generality, len(feasible_schemes))
 
+    num_insns = len(ab.abs_insns)
+
     generalization = Generalization(
             absblock = absblock,
             witness_file = witness_file,
@@ -331,6 +338,8 @@ def import_generalization(gen_dir):
             interestingness = None,
             generality = generality,
             remarks = remark_text,
+            identifier = identifier,
+            num_insns = num_insns,
         )
 
     generalization.save()
