@@ -36,7 +36,7 @@ While this command is running on a system, the UI will be available on that syst
 in a web browser (tested mainly with Chromium) at
 `http://127.0.0.1:8000/anica/`.
 
-All pages of the UI have a "Help" button in the top-right corner that opens a side pane with information about the current page.
+All pages of the UI have a "Open Docs" button in the top-right corner that opens a side pane with information about the current page.
 
 ### Adding New Campaigns
 
