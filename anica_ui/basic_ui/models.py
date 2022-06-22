@@ -1,6 +1,7 @@
 from django.db import models
 from django.utils.dateparse import parse_datetime
 
+import csv
 from collections import defaultdict
 import json
 import math
@@ -96,6 +97,71 @@ class Generalization(models.Model):
     remarks = models.TextField(null=True)
     identifier = models.CharField(max_length=256, null=True)
     num_insns = models.IntegerField()
+
+
+# Models for the basic block view
+class BasicBlockSet(models.Model):
+    identifier = models.CharField(max_length=256)
+
+class BasicBlockEntry(models.Model):
+    bbset = models.ForeignKey(BasicBlockSet, on_delete=models.CASCADE)
+    asm_str = models.TextField()
+    hex_str = models.TextField()
+    interesting_for = models.ManyToManyField(Campaign, related_name='interesting_bbs')
+    covered_by = models.ManyToManyField(Discovery, related_name='covered_bbs')
+
+class DiscoveryRanking(models.Model):
+    bbentry = models.ForeignKey(BasicBlockEntry, on_delete=models.CASCADE)
+    discovery = models.ForeignKey(Discovery, on_delete=models.CASCADE)
+    rank = models.IntegerField()
+
+class BasicBlockMeasurement(models.Model):
+    bb = models.ForeignKey(BasicBlockEntry, on_delete=models.CASCADE)
+    tool = models.ForeignKey(Tool, on_delete=models.CASCADE)
+    result = models.FloatField()
+
+
+def import_basic_block_set(identifier, csv_file):
+    data = []
+    with open(csv_file) as f:
+        reader = csv.DictReader(f)
+        keys = set(reader.fieldnames)
+        for line in reader:
+            data.append(line)
+
+    assert 'bb' in keys, "Trying to import basic blocks from a csv file without 'bb' field!"
+    keys.discard('bb')
+
+    tool_objs = { tool_name: Tool.objects.get_or_create(full_name=tool_name, defaults={})[0] for tool_name in keys }
+
+    bbset = BasicBlockSet(identifier=identifier)
+    bbset.save()
+
+    bbentry_objs = []
+    for line in data:
+        hex_str = line['bb']
+        asm_str = "TODO" # TODO
+        bbentry_objs.append(BasicBlockEntry(
+                bbset=bbset,
+                asm_str=asm_str,
+                hex_str=hex_str,
+            ))
+    BasicBlockEntry.objects.bulk_create(bbentry_objs)
+
+    # obtain the created objects with proper IDs
+    bbentry_objs = BasicBlockEntry.objects.filter(bbset=bbset)
+
+    bbmeasurement_objs = []
+    for line, bbentry_obj in zip(data, bbentry_objs):
+        assert line['bb'] == bbentry_obj.hex_str
+
+        for k in keys:
+            bbmeasurement_objs.append(BasicBlockMeasurement(
+                    bb=bbentry_obj,
+                    tool=tool_objs[k],
+                    result=float(line[k]),
+                ))
+    BasicBlockMeasurement.objects.bulk_create(bbmeasurement_objs)
 
 
 def import_campaign(tag, campaign_dir):
