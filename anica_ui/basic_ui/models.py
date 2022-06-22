@@ -8,6 +8,7 @@ import math
 from pathlib import Path
 
 from iwho.configurable import load_json_config
+import iwho
 
 import logging
 logger = logging.getLogger(__name__)
@@ -121,7 +122,7 @@ class BasicBlockMeasurement(models.Model):
     result = models.FloatField()
 
 
-def import_basic_block_set(identifier, csv_file):
+def import_basic_block_set(isa, identifier, csv_file):
     # TODO unique identifier?
     data = []
     with open(csv_file) as f:
@@ -133,6 +134,8 @@ def import_basic_block_set(identifier, csv_file):
     assert 'bb' in keys, "Trying to import basic blocks from a csv file without 'bb' field!"
     keys.discard('bb')
 
+    iwho_ctx = iwho.get_context_by_name(isa)
+
     tool_objs = { tool_name: Tool.objects.get_or_create(full_name=tool_name, defaults={})[0] for tool_name in keys }
 
     bbset = BasicBlockSet(identifier=identifier)
@@ -141,7 +144,7 @@ def import_basic_block_set(identifier, csv_file):
     bbentry_objs = []
     for line in data:
         hex_str = line['bb']
-        asm_str = "TODO" # TODO
+        asm_str = "\n".join(iwho_ctx.coder.hex2asm(hex_str))
         bbentry_objs.append(BasicBlockEntry(
                 bbset=bbset,
                 asm_str=asm_str,
