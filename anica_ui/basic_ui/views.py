@@ -15,7 +15,7 @@ from markdown import markdown
 from anica.abstractioncontext import AbstractionContext
 from iwho.configurable import config_diff, pretty_print
 
-from .models import Campaign, Discovery, InsnScheme, Generalization
+from .models import Campaign, Discovery, InsnScheme, Generalization, BasicBlockSet
 from .custom_pretty_printing import prettify_absblock, prettify_seconds, prettify_config_diff, prettify_abstraction_config
 from .witness_site import gen_witness_site, gen_measurement_site, get_witnessing_series_id
 from .helpers import load_abstract_block
@@ -827,5 +827,133 @@ def measurements_overview_view(request, campaign_id, meas_id):
     return render(request, 'basic_ui/measurements.html', context)
 
 
+class AllBBSetTable(tables.Table):
+    bbset_id = tables.Column(
+            attrs={"td": campaign_table_attrs, "th": campaign_table_attrs},
+            verbose_name="bbsetID", visible=False)
+    identifier = tables.Column(
+            linkify=(lambda record: django.urls.reverse('basic_ui:single_bbset', kwargs={'bbset_id': record['bbset_id']})),
+            attrs={"td": campaign_table_attrs, "th": campaign_table_attrs},
+            verbose_name="Basic Block Set")
+    num_bbs = tables.Column(attrs={"td": campaign_table_attrs, "th": campaign_table_attrs},
+            verbose_name="# BBs")
 
+    class Meta:
+        attrs = campaign_table_attrs
+        row_attrs = campaign_table_attrs
+
+
+def all_bbsets_view(request):
+
+    bbsets = BasicBlockSet.objects.all()
+
+    data = []
+    for bbset in bbsets:
+        data.append({
+            'bbset_id': bbset.id,
+            'identifier': bbset.identifier,
+            'num_bbs': bbset.basicblockentry_set.count(),
+        })
+
+    table = AllBBSetTable(data)
+
+    topbarpathlist = [
+            ('basic block sets', django.urls.reverse('basic_ui:all_bbsets')),
+        ]
+
+    context = {
+            "title": "All Basic Block Sets",
+            'topbarpathlist': topbarpathlist,
+            'table': table,
+        }
+
+    context.update(get_docs('all_bbsets'))
+
+    return render(request, 'basic_ui/data_table.html', context)
+
+
+class SingleBBSetTable(tables.Table):
+    campaign_id = tables.Column(
+            linkify=(lambda value: django.urls.reverse('basic_ui:single_campaign', kwargs={'campaign_id': value})),
+            attrs={"td": campaign_table_attrs, "th": campaign_table_attrs},
+            verbose_name="Campaign")
+    tag = tables.Column(attrs={"td": campaign_table_attrs, "th": campaign_table_attrs},
+            verbose_name="Campaign Tag")
+    tools = tables.Column(attrs={"td": campaign_table_attrs, "th": campaign_table_attrs},
+            verbose_name="Tools under Investigation")
+    num_discoveries = tables.Column(attrs={"td": campaign_table_attrs, "th": campaign_table_attrs},
+            verbose_name="# Discoveries")
+    time_spent = tables.Column(attrs={"td": campaign_table_attrs, "th": campaign_table_attrs},
+            verbose_name="Run-Time")
+
+    bbset_size = tables.Column(attrs={"td": campaign_table_attrs, "th": campaign_table_attrs}, visible=False)
+
+    num_interesting = tables.Column(attrs={"td": campaign_table_attrs, "th": campaign_table_attrs},
+            verbose_name="# BBs interesting")
+    num_interesting_covered = tables.Column(attrs={"td": campaign_table_attrs, "th": campaign_table_attrs},
+            verbose_name="# int. BBs covered")
+    num_interesting_covered_top10 = tables.Column(attrs={"td": campaign_table_attrs, "th": campaign_table_attrs},
+            verbose_name="# int. BBs covered by top 10")
+
+    def render_time_spent(self, value):
+        return prettify_seconds(value)
+
+    class Meta:
+        attrs = campaign_table_attrs
+        row_attrs = campaign_table_attrs
+
+def single_bbset_view(request, bbset_id):
+
+    bbset_obj = get_object_or_404(BasicBlockSet, pk=bbset_id)
+
+    topbarpathlist = [
+            ('basic block sets', django.urls.reverse('basic_ui:all_bbsets')),
+            (f'{bbset_obj.identifier}', django.urls.reverse('basic_ui:single_bbset', kwargs={'bbset_id': bbset_id})),
+        ]
+
+    campaigns = Campaign.objects.all()
+
+    data = []
+    bbset_size = bbset_obj.basicblockentry_set.count()
+
+    for cobj in campaigns:
+        num_discoveries = Discovery.objects.filter(batch__campaign=cobj).filter(subsumed_by=None).count()
+        data.append({
+                'campaign_id': cobj.id,
+                'tag': cobj.tag,
+                'tools': tool_str_for(cobj.id),
+                'num_discoveries': num_discoveries,
+                'time_spent': cobj.total_seconds,
+                'bbset_size': bbset_size,
+                'num_interesting': 42, # TODO
+                'num_interesting_covered': 42, # TODO
+                'num_interesting_covered_top10': 42, # TODO
+            })
+
+    table = SingleBBSetTable(data)
+
+    context = {
+            "title": "Single Basic Block Set",
+            'bbset_id': bbset_obj.identifier,
+            'topbarpathlist': topbarpathlist,
+            'table': table,
+        }
+
+    context.update(get_docs('single_bbset'))
+
+    return render(request, 'basic_ui/single_bbset.html', context)
+
+
+# def single_bbset_allbbs_view(request, bbset_id):
+#
+#     topbarpathlist = [
+#             ('basic block sets', django.urls.reverse('basic_ui:all_bbsets')),
+#             (f'{bbset_obj.identifier}', django.urls.reverse('basic_ui:single_bbset', kwargs={'bbset_id': bbset_id})),
+#             ('all basic blocks', django.urls.reverse('basic_ui:singlebbsets_allbbs', kwargs={'bbset_id': bbset_id}) )
+#         ]
+#
+#     context = {
+#             'topbarpathlist': topbarpathlist,
+#         }
+#     return render(request, "basic_ui/data_table.html", context)
 

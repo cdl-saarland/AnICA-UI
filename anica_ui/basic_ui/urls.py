@@ -18,6 +18,9 @@ urlpatterns = [
     path('generalization/<int:generalization_id>/measurements-overview/<int:meas_id>', views.gen_measurements_overview_view, name='gen_measurements_overview'),
     path('generalization/<int:generalization_id>/absblock.json', views.generalization_json_view, name='generalization_json'),
 
+    path('bbsets/', views.all_bbsets_view, name='all_bbsets'),
+    path('bbsets/<int:bbset_id>', views.single_bbset_view, name='single_bbset'),
+
     path('campaign/<int:campaign_id>/discoveries/<str:discovery_id>/absblock.json', views.discovery_json_view, name='discovery_json'),
 
     path('no-measurements', views.measurements_empty_view, name='measurements_empty'),

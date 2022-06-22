@@ -122,6 +122,7 @@ class BasicBlockMeasurement(models.Model):
 
 
 def import_basic_block_set(identifier, csv_file):
+    # TODO unique identifier?
     data = []
     with open(csv_file) as f:
         reader = csv.DictReader(f)
