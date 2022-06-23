@@ -895,7 +895,10 @@ class SingleBBSetTable(tables.Table):
             visible=False)
     percent_interesting_covered = tables.Column(attrs={"td": campaign_table_attrs, "th": campaign_table_attrs},
             verbose_name="int. BBs covered")
+
     num_interesting_covered_top10 = tables.Column(attrs={"td": campaign_table_attrs, "th": campaign_table_attrs},
+            visible=False)
+    percent_interesting_covered_top10 = tables.Column(attrs={"td": campaign_table_attrs, "th": campaign_table_attrs},
             verbose_name="int. BBs covered by top 10")
 
     def render_time_spent(self, value):
@@ -906,6 +909,9 @@ class SingleBBSetTable(tables.Table):
 
     def render_percent_interesting_covered(self, value, record):
         return "{:.2f}% ({})".format(value, record['num_interesting_covered'])
+
+    def render_percent_interesting_covered_top10(self, value, record):
+        return "{:.2f}% ({})".format(value, record['num_interesting_covered_top10'])
 
     class Meta:
         attrs = campaign_table_attrs
@@ -936,6 +942,18 @@ def single_bbset_view(request, bbset_id):
             percent_interesting_covered = 0.0
         else:
             percent_interesting_covered = 100 * float(num_interesting_covered) / float(num_interesting)
+
+        # top10_relevant_discoveries = Discovery.objects.filter(batch__campaign=cobj, discoveryranking__basicblockset=bbset_obj, discoveryranking__rank__lte=10).filter(subsumed_by=None)
+        # should_be_10 = top10_relevant_discoveries.count()
+        # assert should_be_10 == 10
+        top10_covered_interesting_bbs = interesting_bbs.filter(covered_by__batch__campaign=cobj, covered_by__discoveryranking__basicblockset=bbset_obj, covered_by__discoveryranking__rank__lte=10)
+
+        num_interesting_covered_top10 = top10_covered_interesting_bbs.count()
+        if num_interesting == 0:
+            percent_interesting_covered_top10 = 0.0
+        else:
+            percent_interesting_covered_top10 = 100 * float(num_interesting_covered_top10) / float(num_interesting)
+
         data.append({
                 'campaign_id': cobj.id,
                 'tag': cobj.tag,
@@ -946,7 +964,8 @@ def single_bbset_view(request, bbset_id):
                 'num_interesting': num_interesting,
                 'num_interesting_covered': num_interesting_covered,
                 'percent_interesting_covered': percent_interesting_covered,
-                'num_interesting_covered_top10': 42, # TODO
+                'num_interesting_covered_top10': num_interesting_covered_top10,
+                'percent_interesting_covered_top10': percent_interesting_covered_top10,
             })
 
     table = SingleBBSetTable(data)

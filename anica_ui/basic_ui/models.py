@@ -107,6 +107,14 @@ class BasicBlockSet(models.Model):
     identifier = models.CharField(max_length=256)
     isa = models.CharField(max_length=256)
     has_data_for = models.ManyToManyField(Tool)
+    discovery_ranking = models.ManyToManyField(Discovery, through='DiscoveryRanking')
+
+class DiscoveryRanking(models.Model):
+    """ For use as relationship model.
+    """
+    basicblockset = models.ForeignKey(BasicBlockSet, on_delete=models.CASCADE)
+    discovery = models.ForeignKey(Discovery, on_delete=models.CASCADE)
+    rank = models.IntegerField()
 
 class BasicBlockEntry(models.Model):
     bbset = models.ForeignKey(BasicBlockSet, on_delete=models.CASCADE)
@@ -114,11 +122,6 @@ class BasicBlockEntry(models.Model):
     hex_str = models.TextField()
     interesting_for = models.ManyToManyField(Campaign, related_name='interesting_bbs')
     covered_by = models.ManyToManyField(Discovery, related_name='covered_bbs')
-
-class DiscoveryRanking(models.Model):
-    bbentry = models.ForeignKey(BasicBlockEntry, on_delete=models.CASCADE)
-    discovery = models.ForeignKey(Discovery, on_delete=models.CASCADE)
-    rank = models.IntegerField()
 
 class BasicBlockMeasurement(models.Model):
     bb = models.ForeignKey(BasicBlockEntry, on_delete=models.CASCADE)
@@ -428,7 +431,7 @@ def compute_bbset_coverage(campaign_id_seq, bbset_id_seq):
             all_abs.sort(key=lambda x: len(x.abs_insns))
 
             covered = []
-            not_covered = all_bbs
+            not_covered = interesting_bbs
             covered_per_ab = dict()
 
             # bulk-fill a many-to-many relation
@@ -453,10 +456,17 @@ def compute_bbset_coverage(campaign_id_seq, bbset_id_seq):
                         next_not_covered.append(bb)
 
                 covered_per_ab[ab_idx] = covered_by_ab
-
                 not_covered = next_not_covered
-
             through_cls.objects.bulk_create(through_objs)
+
+            ranking_cls = BasicBlockSet.discovery_ranking.through
+            ranking_entries = []
+            coverage_table = list(sorted(covered_per_ab.items(), key=lambda x: x[1], reverse=True))
+            for idx, (abidx, num) in enumerate(coverage_table, start = 1):
+                ab = all_abs[abidx]
+                ranking_entries.append(ranking_cls(basicblockset=bbset, discovery=ab.dbobj, rank=idx))
+
+            ranking_cls.objects.bulk_create(ranking_entries)
 
 
 def import_generalization(gen_dir):
