@@ -892,6 +892,8 @@ class SingleBBSetTable(tables.Table):
     num_interesting = tables.Column(attrs={"td": campaign_table_attrs, "th": campaign_table_attrs},
             verbose_name="# BBs interesting")
     num_interesting_covered = tables.Column(attrs={"td": campaign_table_attrs, "th": campaign_table_attrs},
+            visible=False)
+    percent_interesting_covered = tables.Column(attrs={"td": campaign_table_attrs, "th": campaign_table_attrs},
             verbose_name="int. BBs covered")
     num_interesting_covered_top10 = tables.Column(attrs={"td": campaign_table_attrs, "th": campaign_table_attrs},
             verbose_name="int. BBs covered by top 10")
@@ -901,6 +903,9 @@ class SingleBBSetTable(tables.Table):
 
     def render_num_interesting(self, value, record):
         return "{} ({:.2f}%)".format(value, 100 * float(value) / float(record['bbset_size']))
+
+    def render_percent_interesting_covered(self, value, record):
+        return "{:.2f}% ({})".format(value, record['num_interesting_covered'])
 
     class Meta:
         attrs = campaign_table_attrs
@@ -923,7 +928,14 @@ def single_bbset_view(request, bbset_id):
     for cobj in campaigns:
         relevant_discoveries = Discovery.objects.filter(batch__campaign=cobj).filter(subsumed_by=None)
         num_discoveries = relevant_discoveries.count()
-        num_interesting = cobj.interesting_bbs.filter(bbset=bbset_obj).count()
+        interesting_bbs = cobj.interesting_bbs.filter(bbset=bbset_obj)
+        num_interesting = interesting_bbs.count()
+        covered_interesting_bbs = interesting_bbs.filter(covered_by__batch__campaign=cobj)
+        num_interesting_covered = covered_interesting_bbs.count()
+        if num_interesting == 0:
+            percent_interesting_covered = 0.0
+        else:
+            percent_interesting_covered = 100 * float(num_interesting_covered) / float(num_interesting)
         data.append({
                 'campaign_id': cobj.id,
                 'tag': cobj.tag,
@@ -932,7 +944,8 @@ def single_bbset_view(request, bbset_id):
                 'time_spent': cobj.total_seconds,
                 'bbset_size': bbset_size,
                 'num_interesting': num_interesting,
-                'num_interesting_covered': 42, # TODO
+                'num_interesting_covered': num_interesting_covered,
+                'percent_interesting_covered': percent_interesting_covered,
                 'num_interesting_covered_top10': 42, # TODO
             })
 

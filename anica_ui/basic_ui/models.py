@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 from anica.abstractblock import AbstractBlock
 from anica.abstractioncontext import AbstractionContext
 from anica.interestingness import InterestingnessMetric
+from anica.satsumption import check_subsumed
 
 from .helpers import load_abstract_block
 
@@ -372,11 +373,14 @@ def compute_bbset_coverage(campaign_id_seq, bbset_id_seq):
         # produce iwho basic blocks
         isa = bbset.isa
         iwho_ctx = iwho.get_context_by_name(isa)
-        bbs = []
+        all_bbs = []
         for bbentry in bbset.basicblockentry_set.all():
             asm_str = bbentry.asm_str
             insns = iwho_ctx.parse_validated_asm(asm_str)
-            bbs.append((iwho_ctx.make_bb(insns), bbentry))
+            bb = iwho_ctx.make_bb(insns)
+            # inject the db object for later reference
+            bb.dbobj = bbentry
+            all_bbs.append(bb)
 
         for campaign_id in campaign_id_seq:
             campaign = Campaign.objects.get(pk=campaign_id)
@@ -395,7 +399,8 @@ def compute_bbset_coverage(campaign_id_seq, bbset_id_seq):
             interestingness_metric = InterestingnessMetric(interestingness_config)
 
             interesting_bbs = []
-            for bb, bbentry in bbs:
+            for bb in all_bbs:
+                bbentry = bb.dbobj
                 # TODO this could raise an error if two measurements with the
                 # same tool are present (which shouldn't be possible)
                 eval_res = {t.full_name: {
@@ -407,7 +412,51 @@ def compute_bbset_coverage(campaign_id_seq, bbset_id_seq):
                     interesting_bbs.append(bb)
                     bbentry.interesting_for.add(campaign)
 
-    pass
+            relevant_discoveries = Discovery.objects.filter(batch__campaign=campaign).filter(subsumed_by=None)
+
+            all_abs = []
+            actx = None
+            for d in relevant_discoveries:
+                absblock = d.absblock
+                ab = load_abstract_block(absblock, actx)
+                if actx is None:
+                    actx = ab.actx
+                # inject the db object for later reference
+                ab.dbobj = d
+                all_abs.append(ab)
+
+            all_abs.sort(key=lambda x: len(x.abs_insns))
+
+            covered = []
+            not_covered = all_bbs
+            covered_per_ab = dict()
+
+            # bulk-fill a many-to-many relation
+            through_cls = BasicBlockEntry.covered_by.through
+            through_objs = []
+
+            for ab_idx, ab in enumerate(all_abs):
+                next_not_covered = []
+
+                # precomputing schemes speeds up subsequent check_subsumed calls for this abstract block
+                precomputed_schemes = []
+                for ai in ab.abs_insns:
+                    precomputed_schemes.append(actx.insn_feature_manager.compute_feasible_schemes(ai.features))
+
+                covered_by_ab = 0
+                for bb in not_covered:
+                    if check_subsumed(bb, ab, precomputed_schemes=precomputed_schemes):
+                        through_objs.append(through_cls(basicblockentry=bb.dbobj, discovery=ab.dbobj))
+                        covered.append(bb)
+                        covered_by_ab += 1
+                    else:
+                        next_not_covered.append(bb)
+
+                covered_per_ab[ab_idx] = covered_by_ab
+
+                not_covered = next_not_covered
+
+            through_cls.objects.bulk_create(through_objs)
 
 
 def import_generalization(gen_dir):
