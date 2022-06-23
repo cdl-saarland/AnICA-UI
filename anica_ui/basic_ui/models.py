@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 
 from anica.abstractblock import AbstractBlock
 from anica.abstractioncontext import AbstractionContext
+from anica.interestingness import InterestingnessMetric
 
 from .helpers import load_abstract_block
 
@@ -103,6 +104,8 @@ class Generalization(models.Model):
 # Models for the basic block view
 class BasicBlockSet(models.Model):
     identifier = models.CharField(max_length=256)
+    isa = models.CharField(max_length=256)
+    has_data_for = models.ManyToManyField(Tool)
 
 class BasicBlockEntry(models.Model):
     bbset = models.ForeignKey(BasicBlockSet, on_delete=models.CASCADE)
@@ -138,8 +141,11 @@ def import_basic_block_set(isa, identifier, csv_file):
 
     tool_objs = { tool_name: Tool.objects.get_or_create(full_name=tool_name, defaults={})[0] for tool_name in keys }
 
-    bbset = BasicBlockSet(identifier=identifier)
+    bbset = BasicBlockSet(identifier=identifier, isa=isa)
     bbset.save()
+
+    for k, obj in tool_objs.items():
+        bbset.has_data_for.add(obj)
 
     bbentry_objs = []
     for line in data:
@@ -351,6 +357,57 @@ def import_campaign(tag, campaign_dir):
                 measurement_objs.append(Measurement(discovery=discovery_obj, interestingness=interestingness))
     Measurement.objects.bulk_create(measurement_objs)
     discovery2ischeme_cls.objects.bulk_create(through_objs)
+
+
+def compute_bbset_coverage(campaign_id_seq, bbset_id_seq):
+    """ Compute metrics on how many basic blocks from the specified BBSets are
+    covered by the specified Campaigns.
+    Both parameters should be sequences of numerical identifiers of
+    corresponding data model objects.
+    """
+    # TODO avoid recomputation?
+    for bbset_id in bbset_id_seq:
+        bbset = BasicBlockSet.objects.get(pk=bbset_id)
+
+        # produce iwho basic blocks
+        isa = bbset.isa
+        iwho_ctx = iwho.get_context_by_name(isa)
+        bbs = []
+        for bbentry in bbset.basicblockentry_set.all():
+            asm_str = bbentry.asm_str
+            insns = iwho_ctx.parse_validated_asm(asm_str)
+            bbs.append((iwho_ctx.make_bb(insns), bbentry))
+
+        for campaign_id in campaign_id_seq:
+            campaign = Campaign.objects.get(pk=campaign_id)
+            config_dict = campaign.config_dict
+            tools = campaign.tools.all()
+
+            tools_without_measurements = tools.difference(bbset.has_data_for.all())
+            if tools_without_measurements.count() > 0:
+                print("skipping campaign {} with bbset {} because necessary measurements are not present for {}".format(
+                    campaign_id, bbset_id, [t.full_name for t in tools_without_measurements]))
+                continue
+
+            tool_names = [ t.full_name for t in tools ]
+
+            interestingness_config = config_dict.get('interestingness_metric', {})
+            interestingness_metric = InterestingnessMetric(interestingness_config)
+
+            interesting_bbs = []
+            for bb, bbentry in bbs:
+                # TODO this could raise an error if two measurements with the
+                # same tool are present (which shouldn't be possible)
+                eval_res = {t.full_name: {
+                            'TP': bbentry.basicblockmeasurement_set.filter(tool=t).get().result
+                        } for t in tools
+                    }
+                is_interesting = interestingness_metric.is_interesting(eval_res)
+                if is_interesting:
+                    interesting_bbs.append(bb)
+                    bbentry.interesting_for.add(campaign)
+
+    pass
 
 
 def import_generalization(gen_dir):

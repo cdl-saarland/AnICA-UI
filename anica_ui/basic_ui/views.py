@@ -856,6 +856,7 @@ def all_bbsets_view(request):
         })
 
     table = AllBBSetTable(data)
+    tables.RequestConfig(request).configure(table)
 
     topbarpathlist = [
             ('basic block sets', django.urls.reverse('basic_ui:all_bbsets')),
@@ -891,12 +892,15 @@ class SingleBBSetTable(tables.Table):
     num_interesting = tables.Column(attrs={"td": campaign_table_attrs, "th": campaign_table_attrs},
             verbose_name="# BBs interesting")
     num_interesting_covered = tables.Column(attrs={"td": campaign_table_attrs, "th": campaign_table_attrs},
-            verbose_name="# int. BBs covered")
+            verbose_name="int. BBs covered")
     num_interesting_covered_top10 = tables.Column(attrs={"td": campaign_table_attrs, "th": campaign_table_attrs},
-            verbose_name="# int. BBs covered by top 10")
+            verbose_name="int. BBs covered by top 10")
 
     def render_time_spent(self, value):
         return prettify_seconds(value)
+
+    def render_num_interesting(self, value, record):
+        return "{} ({:.2f}%)".format(value, 100 * float(value) / float(record['bbset_size']))
 
     class Meta:
         attrs = campaign_table_attrs
@@ -917,7 +921,9 @@ def single_bbset_view(request, bbset_id):
     bbset_size = bbset_obj.basicblockentry_set.count()
 
     for cobj in campaigns:
-        num_discoveries = Discovery.objects.filter(batch__campaign=cobj).filter(subsumed_by=None).count()
+        relevant_discoveries = Discovery.objects.filter(batch__campaign=cobj).filter(subsumed_by=None)
+        num_discoveries = relevant_discoveries.count()
+        num_interesting = cobj.interesting_bbs.filter(bbset=bbset_obj).count()
         data.append({
                 'campaign_id': cobj.id,
                 'tag': cobj.tag,
@@ -925,12 +931,13 @@ def single_bbset_view(request, bbset_id):
                 'num_discoveries': num_discoveries,
                 'time_spent': cobj.total_seconds,
                 'bbset_size': bbset_size,
-                'num_interesting': 42, # TODO
+                'num_interesting': num_interesting,
                 'num_interesting_covered': 42, # TODO
                 'num_interesting_covered_top10': 42, # TODO
             })
 
     table = SingleBBSetTable(data)
+    tables.RequestConfig(request).configure(table)
 
     context = {
             "title": "Single Basic Block Set",
