@@ -57,6 +57,14 @@ def tool_str_for(campaign_id):
 
 campaign_table_attrs = {"class": "campaigntable"}
 
+def start_view(request):
+    context = {
+        "title": "Start",
+        'topbarpathlist': [],
+    }
+    context.update(get_docs('start'))
+    return render(request, "basic_ui/start.html",  context)
+
 class CampaignTable(tables.Table):
     campaign_id = tables.Column(
             linkify=(lambda value: django.urls.reverse('basic_ui:single_campaign', kwargs={'campaign_id': value})),

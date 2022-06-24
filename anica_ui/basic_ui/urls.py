@@ -4,7 +4,9 @@ from . import views
 
 app_name = 'basic_ui'
 urlpatterns = [
-    path('', views.all_campaigns_view, name='all_campaigns'),
+    path('', views.start_view, name='start'),
+
+    path('campaign/', views.all_campaigns_view, name='all_campaigns'),
     path('campaign/<int:campaign_id>/', views.single_campaign_view, name='single_campaign'),
     path('campaign/<int:campaign_id>/discoveries/', views.all_discoveries_view, name='all_discoveries'),
     path('campaign/<int:campaign_id>/discoveries/<str:discovery_id>/', views.single_discovery_view, name='single_discovery'),

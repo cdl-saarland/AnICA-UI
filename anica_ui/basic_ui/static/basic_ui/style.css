@@ -143,6 +143,10 @@ body {
     right: 16px;
 }
 
+.startlist > li {
+    padding: 10px;
+
+}
 
 .code {
   font-family: monospace;
