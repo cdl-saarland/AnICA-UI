@@ -975,16 +975,3 @@ def single_bbset_view(request, bbset_id):
     return render(request, 'basic_ui/single_bbset.html', context)
 
 
-# def single_bbset_allbbs_view(request, bbset_id):
-#
-#     topbarpathlist = [
-#             ('basic block sets', django.urls.reverse('basic_ui:all_bbsets')),
-#             (f'{bbset_obj.identifier}', django.urls.reverse('basic_ui:single_bbset', kwargs={'bbset_id': bbset_id})),
-#             ('all basic blocks', django.urls.reverse('basic_ui:singlebbsets_allbbs', kwargs={'bbset_id': bbset_id}) )
-#         ]
-#
-#     context = {
-#             'topbarpathlist': topbarpathlist,
-#         }
-#     return render(request, "basic_ui/data_table.html", context)
-
