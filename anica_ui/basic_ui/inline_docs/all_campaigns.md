@@ -1,6 +1,7 @@
 # All Campaigns View
 
 This view gives an overview over all discovery campaigns currently registered.
+Select one for closer investigation by clicking on its ID in the "Campaign ID" column.
 
 ### Table Columns
 Sorting the table by the value of a specific column is possible for most columns.
