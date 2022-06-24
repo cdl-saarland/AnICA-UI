@@ -836,7 +836,7 @@ class AllBBSetTable(tables.Table):
             attrs={"td": discovery_table_attrs, "th": discovery_table_attrs},
             verbose_name="Basic Block Set")
     tools = tables.Column(attrs={"td": discovery_table_attrs, "th": discovery_table_attrs},
-            verbose_name="Measured Tools")
+            verbose_name="Measured Tools", orderable=False)
     num_bbs = tables.Column(attrs={"td": discovery_table_attrs, "th": discovery_table_attrs},
             verbose_name="# BBs")
 
