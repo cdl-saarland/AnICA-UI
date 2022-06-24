@@ -15,7 +15,7 @@ from markdown import markdown
 from anica.abstractioncontext import AbstractionContext
 from iwho.configurable import config_diff, pretty_print
 
-from .models import Campaign, Discovery, InsnScheme, Generalization, BasicBlockSet
+from .models import Campaign, Discovery, InsnScheme, Generalization, BasicBlockSet, BasicBlockSetMetrics
 from .custom_pretty_printing import prettify_absblock, prettify_seconds, prettify_config_diff, prettify_abstraction_config
 from .witness_site import gen_witness_site, gen_measurement_site, get_witnessing_series_id
 from .helpers import load_abstract_block
@@ -934,39 +934,31 @@ def single_bbset_view(request, bbset_id):
     for cobj in campaigns:
         relevant_discoveries = Discovery.objects.filter(batch__campaign=cobj).filter(subsumed_by=None)
         num_discoveries = relevant_discoveries.count()
-        interesting_bbs = cobj.interesting_bbs.filter(bbset=bbset_obj)
-        num_interesting = interesting_bbs.count()
-        covered_interesting_bbs = interesting_bbs.filter(covered_by__batch__campaign=cobj)
-        num_interesting_covered = covered_interesting_bbs.count()
-        if num_interesting == 0:
-            percent_interesting_covered = 0.0
-        else:
-            percent_interesting_covered = 100 * float(num_interesting_covered) / float(num_interesting)
 
-        # top10_relevant_discoveries = Discovery.objects.filter(batch__campaign=cobj, discoveryranking__basicblockset=bbset_obj, discoveryranking__rank__lte=10).filter(subsumed_by=None)
-        # should_be_10 = top10_relevant_discoveries.count()
-        # assert should_be_10 == 10
-        top10_covered_interesting_bbs = interesting_bbs.filter(covered_by__batch__campaign=cobj, covered_by__discoveryranking__basicblockset=bbset_obj, covered_by__discoveryranking__rank__lte=10)
+        try:
+            metrics = BasicBlockSetMetrics.objects.get(bbset=bbset_obj, campaign=cobj)
 
-        num_interesting_covered_top10 = top10_covered_interesting_bbs.count()
-        if num_interesting == 0:
-            percent_interesting_covered_top10 = 0.0
-        else:
-            percent_interesting_covered_top10 = 100 * float(num_interesting_covered_top10) / float(num_interesting)
+            num_interesting = metrics.num_bbs_interesting
+            num_interesting_covered = metrics.num_interesting_bbs_covered
+            percent_interesting_covered = metrics.percent_interesting_bbs_covered
+            num_interesting_covered_top10 = metrics.num_interesting_bbs_covered_top10
+            percent_interesting_covered_top10 = metrics.percent_interesting_bbs_covered_top10
 
-        data.append({
-                'campaign_id': cobj.id,
-                'tag': cobj.tag,
-                'tools': tool_str_for(cobj.id),
-                'num_discoveries': num_discoveries,
-                'time_spent': cobj.total_seconds,
-                'bbset_size': bbset_size,
-                'num_interesting': num_interesting,
-                'num_interesting_covered': num_interesting_covered,
-                'percent_interesting_covered': percent_interesting_covered,
-                'num_interesting_covered_top10': num_interesting_covered_top10,
-                'percent_interesting_covered_top10': percent_interesting_covered_top10,
-            })
+            data.append({
+                    'campaign_id': cobj.id,
+                    'tag': cobj.tag,
+                    'tools': tool_str_for(cobj.id),
+                    'num_discoveries': num_discoveries,
+                    'time_spent': cobj.total_seconds,
+                    'bbset_size': bbset_size,
+                    'num_interesting': num_interesting,
+                    'num_interesting_covered': num_interesting_covered,
+                    'percent_interesting_covered': percent_interesting_covered,
+                    'num_interesting_covered_top10': num_interesting_covered_top10,
+                    'percent_interesting_covered_top10': percent_interesting_covered_top10,
+                })
+        except BasicBlockSetMetrics.DoesNotExist:
+            pass
 
     table = SingleBBSetTable(data)
     tables.RequestConfig(request).configure(table)

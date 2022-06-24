@@ -17,6 +17,7 @@ from anica.abstractblock import AbstractBlock
 from anica.abstractioncontext import AbstractionContext
 from anica.interestingness import InterestingnessMetric
 from anica.satsumption import check_subsumed
+from anica.bbset_coverage import get_table_metrics
 
 from .helpers import load_abstract_block
 
@@ -107,14 +108,6 @@ class BasicBlockSet(models.Model):
     identifier = models.CharField(max_length=256)
     isa = models.CharField(max_length=256)
     has_data_for = models.ManyToManyField(Tool)
-    discovery_ranking = models.ManyToManyField(Discovery, through='DiscoveryRanking')
-
-class DiscoveryRanking(models.Model):
-    """ For use as relationship model.
-    """
-    basicblockset = models.ForeignKey(BasicBlockSet, on_delete=models.CASCADE)
-    discovery = models.ForeignKey(Discovery, on_delete=models.CASCADE)
-    rank = models.IntegerField()
 
 class BasicBlockEntry(models.Model):
     bbset = models.ForeignKey(BasicBlockSet, on_delete=models.CASCADE)
@@ -127,6 +120,16 @@ class BasicBlockMeasurement(models.Model):
     bb = models.ForeignKey(BasicBlockEntry, on_delete=models.CASCADE)
     tool = models.ForeignKey(Tool, on_delete=models.CASCADE)
     result = models.FloatField()
+
+class BasicBlockSetMetrics(models.Model):
+    bbset = models.ForeignKey(BasicBlockSet, on_delete=models.CASCADE)
+    campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE)
+    num_bbs_interesting = models.IntegerField()
+    percent_bbs_interesting = models.FloatField()
+    num_interesting_bbs_covered = models.IntegerField()
+    percent_interesting_bbs_covered = models.FloatField()
+    num_interesting_bbs_covered_top10 = models.IntegerField()
+    percent_interesting_bbs_covered_top10 = models.FloatField()
 
 
 def import_basic_block_set(isa, identifier, csv_file):
@@ -430,43 +433,10 @@ def compute_bbset_coverage(campaign_id_seq, bbset_id_seq):
 
             all_abs.sort(key=lambda x: len(x.abs_insns))
 
-            covered = []
-            not_covered = interesting_bbs
-            covered_per_ab = dict()
+            metrics = get_table_metrics(actx=actx, all_abs=all_abs, interesting_bbs=interesting_bbs, total_num_bbs=len(all_bbs))
 
-            # bulk-fill a many-to-many relation
-            through_cls = BasicBlockEntry.covered_by.through
-            through_objs = []
-
-            for ab_idx, ab in enumerate(all_abs):
-                next_not_covered = []
-
-                # precomputing schemes speeds up subsequent check_subsumed calls for this abstract block
-                precomputed_schemes = []
-                for ai in ab.abs_insns:
-                    precomputed_schemes.append(actx.insn_feature_manager.compute_feasible_schemes(ai.features))
-
-                covered_by_ab = 0
-                for bb in not_covered:
-                    if check_subsumed(bb, ab, precomputed_schemes=precomputed_schemes):
-                        through_objs.append(through_cls(basicblockentry=bb.dbobj, discovery=ab.dbobj))
-                        covered.append(bb)
-                        covered_by_ab += 1
-                    else:
-                        next_not_covered.append(bb)
-
-                covered_per_ab[ab_idx] = covered_by_ab
-                not_covered = next_not_covered
-            through_cls.objects.bulk_create(through_objs)
-
-            ranking_cls = BasicBlockSet.discovery_ranking.through
-            ranking_entries = []
-            coverage_table = list(sorted(covered_per_ab.items(), key=lambda x: x[1], reverse=True))
-            for idx, (abidx, num) in enumerate(coverage_table, start = 1):
-                ab = all_abs[abidx]
-                ranking_entries.append(ranking_cls(basicblockset=bbset, discovery=ab.dbobj, rank=idx))
-
-            ranking_cls.objects.bulk_create(ranking_entries)
+            obj = BasicBlockSetMetrics(bbset=bbset, campaign=campaign, **metrics)
+            obj.save()
 
 
 def import_generalization(gen_dir):
