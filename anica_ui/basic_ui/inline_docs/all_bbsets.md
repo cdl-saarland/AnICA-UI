@@ -8,6 +8,10 @@ Select one for closer investigation by clicking on its name in the "Basic Block 
 Sorting the table by the value of a specific column is possible for most columns.
 Click the column title to do so, and click it again to reverse the order.
 
+#### BBSet ID
+This is the numerical ID of the basic block set. Use it as option in the command line interface to compute metrics for this basic block set.
+Click it to see computed coverage metrics for this basic block set.
+
 #### Basic Block Set
 This is the descriptive name of the basic block set, as specified at its import.
 Click it to see computed coverage metrics for this basic block set.

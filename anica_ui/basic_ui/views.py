@@ -837,8 +837,9 @@ def measurements_overview_view(request, campaign_id, meas_id):
 
 class AllBBSetTable(tables.Table):
     bbset_id = tables.Column(
+            linkify=(lambda value: django.urls.reverse('basic_ui:single_bbset', kwargs={'bbset_id': value})),
             attrs={"td": discovery_table_attrs, "th": discovery_table_attrs},
-            verbose_name="bbsetID", visible=False)
+            verbose_name="BBSet ID")
     identifier = tables.Column(
             linkify=(lambda record: django.urls.reverse('basic_ui:single_bbset', kwargs={'bbset_id': record['bbset_id']})),
             attrs={"td": discovery_table_attrs, "th": discovery_table_attrs},
