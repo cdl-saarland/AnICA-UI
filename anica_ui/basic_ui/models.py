@@ -378,30 +378,34 @@ def compute_bbset_coverage(campaign_id_seq, bbset_id_seq):
     if len(bbset_id_seq) == 0:
         bbset_id_seq = [ x.id for x in BasicBlockSet.objects.all() ]
 
-    # TODO avoid recomputation?
     for bbset_id in bbset_id_seq:
         bbset = BasicBlockSet.objects.get(pk=bbset_id)
 
         # produce iwho basic blocks
         isa = bbset.isa
         iwho_ctx = iwho.get_context_by_name(isa)
-        all_bbs = []
-        for bbentry in bbset.basicblockentry_set.all():
-            asm_str = bbentry.asm_str
-            insns = iwho_ctx.parse_validated_asm(asm_str)
-            bb = iwho_ctx.make_bb(insns)
-            # inject the db object for later reference
-            bb.dbobj = bbentry
-            all_bbs.append(bb)
+
+        all_bbentries = list(bbset.basicblockentry_set.all())
+        num_bbs = len(all_bbentries)
+        # for caching parsing results
+        parsed_bbs = dict()
 
         for campaign_id in campaign_id_seq:
             campaign = Campaign.objects.get(pk=campaign_id)
             config_dict = campaign.config_dict
             tools = campaign.tools.all()
 
+            # avoid duplicate computations
+            relevant_metrics = BasicBlockSetMetrics.objects.filter(bbset=bbset, campaign=campaign)
+            relevant_interestingness = BasicBlockEntry.interesting_for.through.objects.filter(campaign_id=campaign_id, basicblockentry_id__bbset=bbset)
+            data_present = relevant_metrics.exists() or relevant_interestingness.exists()
+            if data_present:
+                print(f"skipping (campaign {campaign_id}, bbset {bbset_id}) because metrics are already present")
+                continue
+
             tools_without_measurements = tools.difference(bbset.has_data_for.all())
             if tools_without_measurements.count() > 0:
-                print("skipping campaign {} with bbset {} because necessary measurements are not present for {}".format(
+                print("skipping (campaign {}, bbset {}) because necessary measurements are not present for {}".format(
                     campaign_id, bbset_id, [t.full_name for t in tools_without_measurements]))
                 continue
 
@@ -411,17 +415,24 @@ def compute_bbset_coverage(campaign_id_seq, bbset_id_seq):
             interestingness_metric = InterestingnessMetric(interestingness_config)
 
             interesting_bbs = []
-            for bb in all_bbs:
-                bbentry = bb.dbobj
-                # TODO this could raise an error if two measurements with the
-                # same tool are present (which shouldn't be possible)
+            for bbidx, bbentry in enumerate(all_bbentries):
                 eval_res = {t.full_name: {
                             'TP': bbentry.basicblockmeasurement_set.filter(tool=t).get().result
                         } for t in tools
                     }
                 is_interesting = interestingness_metric.is_interesting(eval_res)
                 if is_interesting:
-                    interesting_bbs.append(bb)
+                    # basic blocks are parsed on demand and cached
+                    parsed_bb = parsed_bbs.get(bbidx, None)
+                    if parsed_bb is None:
+                        asm_str = bbentry.asm_str
+                        insns = iwho_ctx.parse_validated_asm(asm_str)
+                        parsed_bb = iwho_ctx.make_bb(insns)
+                        # inject the db object for later reference
+                        parsed_bb.dbobj = bbentry
+                        parsed_bbs[bbidx] = parsed_bb
+
+                    interesting_bbs.append(parsed_bb)
                     bbentry.interesting_for.add(campaign)
 
             relevant_discoveries = Discovery.objects.filter(batch__campaign=campaign).filter(subsumed_by=None)
@@ -439,7 +450,7 @@ def compute_bbset_coverage(campaign_id_seq, bbset_id_seq):
 
             all_abs.sort(key=lambda x: len(x.abs_insns))
 
-            metrics = get_table_metrics(actx=actx, all_abs=all_abs, interesting_bbs=interesting_bbs, total_num_bbs=len(all_bbs))
+            metrics = get_table_metrics(actx=actx, all_abs=all_abs, interesting_bbs=interesting_bbs, total_num_bbs=num_bbs)
 
             obj = BasicBlockSetMetrics(bbset=bbset, campaign=campaign, **metrics)
             obj.save()
