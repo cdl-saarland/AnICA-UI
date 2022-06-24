@@ -6,8 +6,8 @@ class Command(BaseCommand):
     help = 'Imports a campaign from each specified campaign directory'
 
     def add_arguments(self, parser):
-        parser.add_argument('--campaigns', nargs='+', type=int)
-        parser.add_argument('--bbsets', nargs='+', type=int)
+        parser.add_argument('--campaigns', nargs='*', default=[], type=int)
+        parser.add_argument('--bbsets', nargs='*', default=[], type=int)
 
     def handle(self, *args, **options):
         campaign_ids = options['campaigns']

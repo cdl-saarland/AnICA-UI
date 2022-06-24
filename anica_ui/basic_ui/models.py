@@ -369,8 +369,15 @@ def compute_bbset_coverage(campaign_id_seq, bbset_id_seq):
     """ Compute metrics on how many basic blocks from the specified BBSets are
     covered by the specified Campaigns.
     Both parameters should be sequences of numerical identifiers of
-    corresponding data model objects.
+    corresponding data model objects. Pass empty lists to consider all
+    registered entities.
     """
+    if len(campaign_id_seq) == 0:
+        campaign_id_seq = [ x.id for x in Campaign.objects.all() ]
+
+    if len(bbset_id_seq) == 0:
+        bbset_id_seq = [ x.id for x in BasicBlockSet.objects.all() ]
+
     # TODO avoid recomputation?
     for bbset_id in bbset_id_seq:
         bbset = BasicBlockSet.objects.get(pk=bbset_id)
