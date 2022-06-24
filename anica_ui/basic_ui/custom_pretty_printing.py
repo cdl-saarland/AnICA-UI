@@ -9,6 +9,24 @@ import re
 
 # TODO we might want to use django methods to create this html in the first place
 
+def listify(ls, ordered=False):
+    res = ""
+    if ordered:
+        res += "<ol>"
+    else:
+        res += "<ul>"
+
+    lines = ("<li>{}</li>".format(l) for l in ls)
+    res += " ".join(lines)
+
+    if ordered:
+        res += "</ol>"
+    else:
+        res += "</ul>"
+
+    return mark_safe(res)
+
+
 def prettify_absinsn(absinsn, hl_feature=None, skip_top=False):
     if absinsn.is_top():
         res = "TOP"

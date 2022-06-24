@@ -16,7 +16,7 @@ from anica.abstractioncontext import AbstractionContext
 from iwho.configurable import config_diff, pretty_print
 
 from .models import Campaign, Discovery, InsnScheme, Generalization, BasicBlockSet, BasicBlockSetMetrics
-from .custom_pretty_printing import prettify_absblock, prettify_seconds, prettify_config_diff, prettify_abstraction_config
+from .custom_pretty_printing import prettify_absblock, prettify_seconds, prettify_config_diff, prettify_abstraction_config, listify
 from .witness_site import gen_witness_site, gen_measurement_site, get_witnessing_series_id
 from .helpers import load_abstract_block
 
@@ -829,18 +829,20 @@ def measurements_overview_view(request, campaign_id, meas_id):
 
 class AllBBSetTable(tables.Table):
     bbset_id = tables.Column(
-            attrs={"td": campaign_table_attrs, "th": campaign_table_attrs},
+            attrs={"td": discovery_table_attrs, "th": discovery_table_attrs},
             verbose_name="bbsetID", visible=False)
     identifier = tables.Column(
             linkify=(lambda record: django.urls.reverse('basic_ui:single_bbset', kwargs={'bbset_id': record['bbset_id']})),
-            attrs={"td": campaign_table_attrs, "th": campaign_table_attrs},
+            attrs={"td": discovery_table_attrs, "th": discovery_table_attrs},
             verbose_name="Basic Block Set")
-    num_bbs = tables.Column(attrs={"td": campaign_table_attrs, "th": campaign_table_attrs},
+    tools = tables.Column(attrs={"td": discovery_table_attrs, "th": discovery_table_attrs},
+            verbose_name="Measured Tools")
+    num_bbs = tables.Column(attrs={"td": discovery_table_attrs, "th": discovery_table_attrs},
             verbose_name="# BBs")
 
     class Meta:
-        attrs = campaign_table_attrs
-        row_attrs = campaign_table_attrs
+        attrs = discovery_table_attrs
+        row_attrs = discovery_table_attrs
 
 
 def all_bbsets_view(request):
@@ -849,9 +851,11 @@ def all_bbsets_view(request):
 
     data = []
     for bbset in bbsets:
+        tool_str = listify(bbset.has_data_for.all())
         data.append({
             'bbset_id': bbset.id,
             'identifier': bbset.identifier,
+            'tools': tool_str,
             'num_bbs': bbset.basicblockentry_set.count(),
         })
 

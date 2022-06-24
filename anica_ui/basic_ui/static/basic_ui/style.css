@@ -156,6 +156,10 @@ body {
 }
 
 
+li {
+    text-align: left;
+}
+
 table.campaigntable {
     margin: auto;
 }
@@ -204,11 +208,11 @@ table.insnschemetable, th.insnschemetable, td.insnschemetable {
     border: 1px solid var(--table-border);
 }
 
-
 ul.pagination > li {
     display: inline;
     padding-left: 5px;
     padding-right: 5px;
+    text-align: center;
 }
 
 ul.pagination > li.active {
