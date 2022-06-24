@@ -114,7 +114,6 @@ class BasicBlockEntry(models.Model):
     asm_str = models.TextField()
     hex_str = models.TextField()
     interesting_for = models.ManyToManyField(Campaign, related_name='interesting_bbs')
-    covered_by = models.ManyToManyField(Discovery, related_name='covered_bbs')
 
 class BasicBlockMeasurement(models.Model):
     bb = models.ForeignKey(BasicBlockEntry, on_delete=models.CASCADE)
