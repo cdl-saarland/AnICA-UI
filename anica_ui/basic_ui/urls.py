@@ -22,6 +22,7 @@ urlpatterns = [
 
     path('bbsets/', views.all_bbsets_view, name='all_bbsets'),
     path('bbsets/<int:bbset_id>', views.single_bbset_view, name='single_bbset'),
+    path('bbsets/<int:bbset_id>/allbbs', views.single_bbset_allbbs_view, name='single_bbset_allbbs'),
 
     path('campaign/<int:campaign_id>/discoveries/<str:discovery_id>/absblock.json', views.discovery_json_view, name='discovery_json'),
 

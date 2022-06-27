@@ -113,6 +113,7 @@ class BasicBlockEntry(models.Model):
     bbset = models.ForeignKey(BasicBlockSet, on_delete=models.CASCADE)
     asm_str = models.TextField()
     hex_str = models.TextField()
+    measurement_results = models.JSONField()
     interesting_for = models.ManyToManyField(Campaign, related_name='interesting_bbs')
 
 class BasicBlockMeasurement(models.Model):
@@ -156,10 +157,12 @@ def import_basic_block_set(isa, identifier, csv_file):
     for line in data:
         hex_str = line['bb']
         asm_str = "\n".join(iwho_ctx.coder.hex2asm(hex_str))
+        measurement_results = { k: float(v) for k, v in line.items() if k != 'bb'}
         bbentry_objs.append(BasicBlockEntry(
                 bbset=bbset,
                 asm_str=asm_str,
                 hex_str=hex_str,
+                measurement_results=measurement_results,
             ))
     BasicBlockEntry.objects.bulk_create(bbentry_objs)
 

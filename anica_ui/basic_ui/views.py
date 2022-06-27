@@ -4,6 +4,8 @@ from django.db.models import F, Q, Sum, Avg, Count, Value
 from django.http import HttpResponse, Http404
 from django.shortcuts import render, get_object_or_404
 from django.utils.safestring import mark_safe
+from django.utils.html import escape
+from django.utils.safestring import mark_safe
 
 from pathlib import Path
 import os
@@ -15,7 +17,7 @@ from markdown import markdown
 from anica.abstractioncontext import AbstractionContext
 from iwho.configurable import config_diff, pretty_print
 
-from .models import Campaign, Discovery, InsnScheme, Generalization, BasicBlockSet, BasicBlockSetMetrics
+from .models import Campaign, Discovery, InsnScheme, Generalization, BasicBlockSet, BasicBlockSetMetrics, BasicBlockEntry
 from .custom_pretty_printing import prettify_absblock, prettify_seconds, prettify_config_diff, prettify_abstraction_config, listify
 from .witness_site import gen_witness_site, gen_measurement_site, get_witnessing_series_id
 from .helpers import load_abstract_block
@@ -978,7 +980,8 @@ def single_bbset_view(request, bbset_id):
 
     context = {
             "title": "Single Basic Block Set",
-            'bbset_id': bbset_obj.identifier,
+            'bbset_name': bbset_obj.identifier,
+            'bbset_id': bbset_id,
             'topbarpathlist': topbarpathlist,
             'table': table,
         }
@@ -987,4 +990,55 @@ def single_bbset_view(request, bbset_id):
 
     return render(request, 'basic_ui/single_bbset.html', context)
 
+
+
+class EntireBBSetTable(tables.Table):
+    hex_str = tables.Column(
+            attrs={"td": discovery_table_attrs, "th": discovery_table_attrs},
+            verbose_name="Basic Block (HEX)")
+    asm_str = tables.Column(
+            attrs={"td": discovery_table_attrs, "th": discovery_table_attrs},
+            verbose_name="Basic Block (ASM)", orderable=False)
+    measurement_results = tables.Column(
+            attrs={"td": discovery_table_attrs, "th": discovery_table_attrs},
+            verbose_name="Predictor Results", orderable=False)
+
+    def render_measurement_results(self, value):
+        lines = []
+        for tool, res in value.items():
+            lines.append("  {}: {:.2f}".format(tool, res))
+        lines.sort()
+        return listify(lines)
+
+    def render_asm_str(self, value):
+        return mark_safe("<pre class=\"asmblock\">" + escape(value) + "</pre>")
+
+    def render_hex_str(self, value):
+        return mark_safe("<pre class=\"hexblock\">" + escape(value) + "</pre>")
+
+    class Meta:
+        attrs = discovery_table_attrs
+        row_attrs = discovery_table_attrs
+
+
+def single_bbset_allbbs_view(request, bbset_id):
+    bbset_obj = get_object_or_404(BasicBlockSet, pk=bbset_id)
+
+    topbarpathlist = [
+            ('basic block sets', django.urls.reverse('basic_ui:all_bbsets')),
+            (f'{bbset_obj.identifier}', django.urls.reverse('basic_ui:single_bbset', kwargs={'bbset_id': bbset_id})),
+            ('all basic blocks', django.urls.reverse('basic_ui:single_bbset_allbbs', kwargs={'bbset_id': bbset_id}) )
+        ]
+
+    table = EntireBBSetTable(bbset_obj.basicblockentry_set.all())
+    tables.RequestConfig(request).configure(table)
+
+    context = {
+            "title": "All Basic Blocks",
+            'topbarpathlist': topbarpathlist,
+            'table': table
+        }
+
+    context.update(get_docs('entire_bbset'))
+    return render(request, "basic_ui/data_table.html", context)
 
