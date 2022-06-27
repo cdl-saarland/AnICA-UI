@@ -105,7 +105,7 @@ class Generalization(models.Model):
 
 # Models for the basic block view
 class BasicBlockSet(models.Model):
-    identifier = models.CharField(max_length=256)
+    identifier = models.CharField(max_length=256, unique=True)
     isa = models.CharField(max_length=256)
     has_data_for = models.ManyToManyField(Tool)
 
@@ -132,7 +132,6 @@ class BasicBlockSetMetrics(models.Model):
 
 
 def import_basic_block_set(isa, identifier, csv_file):
-    # TODO unique identifier?
     data = []
     with open(csv_file) as f:
         reader = csv.DictReader(f)
