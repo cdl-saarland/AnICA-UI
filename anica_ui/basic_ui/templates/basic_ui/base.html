@@ -25,17 +25,23 @@ function hide_docs() {
 
 <body>
     <div id='topbar'>
-        <div id='topbartext'>
-        AnICA Explorer
-            <span id='topbarpath'>
-            {# {% block topbarpath %}{% endblock %} #}
-            {% for entry, link in topbarpathlist %}
-                /
-                <a href="{{link}}">{{entry}}</a>
-            {% endfor %}
-            </span>
+        <div id='topbarbox'>
+            <div id='topbarnamebox'>
+                <a href="{% url 'basic_ui:start' %}" style="color:inherit;text-decoration:inherit;">AnICA Explorer</a>
+            </div>
+            <div id='topbarpathbox'>
+                <span id='topbarpath'>
+                {# {% block topbarpath %}{% endblock %} #}
+                {% for entry, link in topbarpathlist %}
+                    /
+                    <a href="{{link}}">{{entry}}</a>
+                {% endfor %}
+                </span>
+            </div>
+            <div id='topbarbuttonbox'>
+                <button id="help-open-button" onclick="show_docs()">Open Docs</button>
+            </div>
         </div>
-        <button id="help-open-button" onclick="show_docs()">Open Docs</button>
     </div>
     <div id="content">
         {% block content %}{% endblock %}

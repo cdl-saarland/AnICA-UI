@@ -1,0 +1,11 @@
+{% extends "basic_ui/base.html" %}
+
+{% load django_tables2 %}
+
+{% block title %}{{title}}{% endblock %}
+
+{% block content %}
+<h3>Discovery Coverage Results for Basic Block Set "{{ bbset_name }}": [<a href="{% url 'basic_ui:single_bbset_allbbs' bbset_id %}">view Basic Blocks</a>]</h3>
+
+    {% render_table table %}
+{% endblock %}

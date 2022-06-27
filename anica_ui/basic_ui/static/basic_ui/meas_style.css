@@ -7,11 +7,6 @@ body {
   margin: 30px;
 }
 
-.asmblock, .hexblock, .code {
-  font-family: monospace;
-  white-space: pre-line;
-}
-
 table, th, td {
   border: 1px solid gray;
 }

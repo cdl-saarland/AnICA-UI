@@ -1,18 +1,23 @@
 from django.db import models
 from django.utils.dateparse import parse_datetime
 
+import csv
 from collections import defaultdict
 import json
 import math
 from pathlib import Path
 
 from iwho.configurable import load_json_config
+import iwho
 
 import logging
 logger = logging.getLogger(__name__)
 
 from anica.abstractblock import AbstractBlock
 from anica.abstractioncontext import AbstractionContext
+from anica.interestingness import InterestingnessMetric
+from anica.satsumption import check_subsumed
+from anica.bbset_coverage import get_table_metrics
 
 from .helpers import load_abstract_block
 
@@ -96,6 +101,85 @@ class Generalization(models.Model):
     remarks = models.TextField(null=True)
     identifier = models.CharField(max_length=256, null=True)
     num_insns = models.IntegerField()
+
+
+# Models for the basic block view
+class BasicBlockSet(models.Model):
+    identifier = models.CharField(max_length=256, unique=True)
+    isa = models.CharField(max_length=256)
+    has_data_for = models.ManyToManyField(Tool)
+
+class BasicBlockEntry(models.Model):
+    bbset = models.ForeignKey(BasicBlockSet, on_delete=models.CASCADE)
+    asm_str = models.TextField()
+    hex_str = models.TextField()
+    measurement_results = models.JSONField()
+    interesting_for = models.ManyToManyField(Campaign, related_name='interesting_bbs')
+
+class BasicBlockMeasurement(models.Model):
+    bb = models.ForeignKey(BasicBlockEntry, on_delete=models.CASCADE)
+    tool = models.ForeignKey(Tool, on_delete=models.CASCADE)
+    result = models.FloatField()
+
+class BasicBlockSetMetrics(models.Model):
+    bbset = models.ForeignKey(BasicBlockSet, on_delete=models.CASCADE)
+    campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE)
+    num_bbs_interesting = models.IntegerField()
+    percent_bbs_interesting = models.FloatField()
+    num_interesting_bbs_covered = models.IntegerField()
+    percent_interesting_bbs_covered = models.FloatField()
+    num_interesting_bbs_covered_top10 = models.IntegerField()
+    percent_interesting_bbs_covered_top10 = models.FloatField()
+
+
+def import_basic_block_set(isa, identifier, csv_file):
+    data = []
+    with open(csv_file) as f:
+        reader = csv.DictReader(f)
+        keys = set(reader.fieldnames)
+        for line in reader:
+            data.append(line)
+
+    assert 'bb' in keys, "Trying to import basic blocks from a csv file without 'bb' field!"
+    keys.discard('bb')
+
+    iwho_ctx = iwho.get_context_by_name(isa)
+
+    tool_objs = { tool_name: Tool.objects.get_or_create(full_name=tool_name, defaults={})[0] for tool_name in keys }
+
+    bbset = BasicBlockSet(identifier=identifier, isa=isa)
+    bbset.save()
+
+    for k, obj in tool_objs.items():
+        bbset.has_data_for.add(obj)
+
+    bbentry_objs = []
+    for line in data:
+        hex_str = line['bb']
+        asm_str = "\n".join(iwho_ctx.coder.hex2asm(hex_str))
+        measurement_results = { k: float(v) for k, v in line.items() if k != 'bb'}
+        bbentry_objs.append(BasicBlockEntry(
+                bbset=bbset,
+                asm_str=asm_str,
+                hex_str=hex_str,
+                measurement_results=measurement_results,
+            ))
+    BasicBlockEntry.objects.bulk_create(bbentry_objs)
+
+    # obtain the created objects with proper IDs
+    bbentry_objs = BasicBlockEntry.objects.filter(bbset=bbset)
+
+    bbmeasurement_objs = []
+    for line, bbentry_obj in zip(data, bbentry_objs):
+        assert line['bb'] == bbentry_obj.hex_str
+
+        for k in keys:
+            bbmeasurement_objs.append(BasicBlockMeasurement(
+                    bb=bbentry_obj,
+                    tool=tool_objs[k],
+                    result=float(line[k]),
+                ))
+    BasicBlockMeasurement.objects.bulk_create(bbmeasurement_objs)
 
 
 def import_campaign(tag, campaign_dir):
@@ -281,6 +365,97 @@ def import_campaign(tag, campaign_dir):
                 measurement_objs.append(Measurement(discovery=discovery_obj, interestingness=interestingness))
     Measurement.objects.bulk_create(measurement_objs)
     discovery2ischeme_cls.objects.bulk_create(through_objs)
+
+
+def compute_bbset_coverage(campaign_id_seq, bbset_id_seq):
+    """ Compute metrics on how many basic blocks from the specified BBSets are
+    covered by the specified Campaigns.
+    Both parameters should be sequences of numerical identifiers of
+    corresponding data model objects. Pass empty lists to consider all
+    registered entities.
+    """
+    if len(campaign_id_seq) == 0:
+        campaign_id_seq = [ x.id for x in Campaign.objects.all() ]
+
+    if len(bbset_id_seq) == 0:
+        bbset_id_seq = [ x.id for x in BasicBlockSet.objects.all() ]
+
+    for bbset_id in bbset_id_seq:
+        bbset = BasicBlockSet.objects.get(pk=bbset_id)
+
+        # produce iwho basic blocks
+        isa = bbset.isa
+        iwho_ctx = iwho.get_context_by_name(isa)
+
+        all_bbentries = list(bbset.basicblockentry_set.all())
+        num_bbs = len(all_bbentries)
+        # for caching parsing results
+        parsed_bbs = dict()
+
+        for campaign_id in campaign_id_seq:
+            campaign = Campaign.objects.get(pk=campaign_id)
+            config_dict = campaign.config_dict
+            tools = campaign.tools.all()
+
+            # avoid duplicate computations
+            relevant_metrics = BasicBlockSetMetrics.objects.filter(bbset=bbset, campaign=campaign)
+            relevant_interestingness = BasicBlockEntry.interesting_for.through.objects.filter(campaign_id=campaign_id, basicblockentry_id__bbset=bbset)
+            data_present = relevant_metrics.exists() or relevant_interestingness.exists()
+            if data_present:
+                print(f"skipping (campaign {campaign_id}, bbset {bbset_id}) because metrics are already present")
+                continue
+
+            tools_without_measurements = tools.difference(bbset.has_data_for.all())
+            if tools_without_measurements.count() > 0:
+                print("skipping (campaign {}, bbset {}) because necessary measurements are not present for {}".format(
+                    campaign_id, bbset_id, [t.full_name for t in tools_without_measurements]))
+                continue
+
+            tool_names = [ t.full_name for t in tools ]
+
+            interestingness_config = config_dict.get('interestingness_metric', {})
+            interestingness_metric = InterestingnessMetric(interestingness_config)
+
+            interesting_bbs = []
+            for bbidx, bbentry in enumerate(all_bbentries):
+                eval_res = {t.full_name: {
+                            'TP': bbentry.basicblockmeasurement_set.filter(tool=t).get().result
+                        } for t in tools
+                    }
+                is_interesting = interestingness_metric.is_interesting(eval_res)
+                if is_interesting:
+                    # basic blocks are parsed on demand and cached
+                    parsed_bb = parsed_bbs.get(bbidx, None)
+                    if parsed_bb is None:
+                        asm_str = bbentry.asm_str
+                        insns = iwho_ctx.parse_validated_asm(asm_str)
+                        parsed_bb = iwho_ctx.make_bb(insns)
+                        # inject the db object for later reference
+                        parsed_bb.dbobj = bbentry
+                        parsed_bbs[bbidx] = parsed_bb
+
+                    interesting_bbs.append(parsed_bb)
+                    bbentry.interesting_for.add(campaign)
+
+            relevant_discoveries = Discovery.objects.filter(batch__campaign=campaign).filter(subsumed_by=None)
+
+            all_abs = []
+            actx = None
+            for d in relevant_discoveries:
+                absblock = d.absblock
+                ab = load_abstract_block(absblock, actx)
+                if actx is None:
+                    actx = ab.actx
+                # inject the db object for later reference
+                ab.dbobj = d
+                all_abs.append(ab)
+
+            all_abs.sort(key=lambda x: len(x.abs_insns))
+
+            metrics = get_table_metrics(actx=actx, all_abs=all_abs, interesting_bbs=interesting_bbs, total_num_bbs=num_bbs)
+
+            obj = BasicBlockSetMetrics(bbset=bbset, campaign=campaign, **metrics)
+            obj.save()
 
 
 def import_generalization(gen_dir):

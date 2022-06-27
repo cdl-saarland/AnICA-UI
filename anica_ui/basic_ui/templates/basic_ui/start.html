@@ -1,0 +1,12 @@
+{% extends "basic_ui/base.html" %}
+
+{% block title %}{{title}}{% endblock %}
+
+{% block content %}
+    <h3>Select a Task:</h3>
+    <ol class="startlist">
+        <li> <b><a style="color:inherit" href="{% url 'basic_ui:all_campaigns' %}">View registered AnICA discovery campaigns.</a></b> </li>
+        <li> <b><a style="color:inherit" href="{% url 'basic_ui:all_generalizations' %}">View selected AnICA generalizations of interesting basic blocks.</a></b> </li>
+        <li> <b><a style="color:inherit" href="{% url 'basic_ui:all_bbsets' %}">View coverage metrics of the discovery campaigns for specific sets of basic blocks.</a></b> </li>
+    </ol>
+{% endblock %}
