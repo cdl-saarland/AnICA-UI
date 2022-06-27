@@ -29,6 +29,7 @@
 /*     --main-bg: #eee; */
 /*     --content-bg: #e6e6e6; */
 /*     --topbar-bg: #004877; */
+/*     --topbar-fg: #e6e6e6; */
 /*     --help-bg: #e6e6e6; */
 /*     --help-border: #01283f; */
 /*     --table-bg: #004877; */
@@ -44,34 +45,57 @@ body {
     font-size: 100%;
     font-family: var(--font);
     background-color: var(--main-bg);
+    margin: 0;
 }
 
 #topbar {
     z-index: 1000;
     overflow: hidden;
     background-color: var(--topbar-bg);
-    position: fixed;
+    position: sticky;
+    /* position: fixed; */
     top: 0;
     left: 0;
     width: 100%;
-    height: 45px;
+    height: auto;
 }
 
-#topbartext {
-    position: absolute;
-    top: 50%;
-    -ms-transform: translateY(-50%);
-    transform: translateY(-50%);
-    margin-left: 10%;
-    white-space: nowrap;
+#topbarbox {
+    /* position: absolute; */
+    top: 0;
+    display: flex;
     font-size: 32px;
+    margin-left: 6%;
+    justify-content: flex-start;
+    align-items: flex-start;
+}
+
+#topbarnamebox {
+    flex-direction: row;
+    min-width: auto;
+    white-space: nowrap;
+    margin-right: 30px;
     color: var(--topbar-fg);
 }
 
-#topbarpath {
-    vertical-align:middle;
-    margin-left: 30px;
+#topbarpathbox {
+    margin-top: 8px;
+    flex-direction: row;
     font-size: 20px;
+    padding-left: 2em;
+    text-indent: -2em;
+    margin-bottom: 4px
+}
+
+#topbarbuttonbox {
+    flex-direction: row;
+    min-width: 120px;
+    min-height: 20px;
+}
+
+#topbarpath {
+    vertical-align: middle;
+    margin-left: 10px;
 }
 
 #topbarpath > a {
@@ -84,7 +108,7 @@ body {
     padding-left: 20px;
     padding-right: 20px;
     padding-bottom: 10px;
-    margin-top: 60px;
+    margin-top: 10px;
     max-width: 1600px;
     min-width: 800px;
     margin-left: auto;
