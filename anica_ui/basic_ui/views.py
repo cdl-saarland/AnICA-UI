@@ -631,6 +631,7 @@ def all_generalizations_view(request):
             'generality': generalization.generality,
             'witness_len': generalization.witness_len,
             'num_insns': generalization.num_insns,
+            'identifier': generalization.identifier,
         })
 
     table = GeneralizationTable(data)
@@ -685,9 +686,13 @@ def single_generalization_view(request, generalization_id):
     if os.path.isfile(path):
         example_series_id = get_witnessing_series_id(path)
 
+    gen_key = generalization_id
+    if gen_obj.identifier is not None:
+        gen_key = "'{}'".format(gen_obj.identifier)
+
     topbarpathlist = [
             ('individual generalizations', django.urls.reverse('basic_ui:all_generalizations')),
-            (f'generalization {generalization_id}', django.urls.reverse('basic_ui:single_generalization', kwargs={'generalization_id': generalization_id}))
+            (f'generalization {gen_key}', django.urls.reverse('basic_ui:single_generalization', kwargs={'generalization_id': generalization_id}))
         ]
 
     context = {
@@ -738,9 +743,13 @@ def gen_witness_view(request, generalization_id):
 
     witness_site = gen_witness_site(path, mk_meas_link)
 
+    gen_key = generalization_id
+    if gen_obj.identifier is not None:
+        gen_key = "'{}'".format(gen_obj.identifier)
+
     topbarpathlist = [
             ('individual generalizations', django.urls.reverse('basic_ui:all_generalizations')),
-            (f'generalization {generalization_id}', django.urls.reverse('basic_ui:single_generalization', kwargs={'generalization_id': generalization_id})),
+            (f'generalization {gen_key}', django.urls.reverse('basic_ui:single_generalization', kwargs={'generalization_id': generalization_id})),
             (f'witness', django.urls.reverse('basic_ui:gen_witness', kwargs={'generalization_id': generalization_id})),
         ]
 
