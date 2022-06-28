@@ -132,6 +132,7 @@ td {
     display: none;
     z-index: 500;
     overflow: hidden;
+    background-color: var(--content-bg);
 }
 
 #measurement_window_close_btn {
