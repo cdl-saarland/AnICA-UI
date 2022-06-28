@@ -702,7 +702,7 @@ def single_generalization_view(request, generalization_id):
             'plots': plots,
             'remark_text': remark_text,
         }
-    context.update(get_docs('single_discovery')) # TODO add docs
+    context.update(get_docs('single_generalization'))
 
     return render(request, 'basic_ui/single_generalization_view.html', context)
 
