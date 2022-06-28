@@ -586,12 +586,9 @@ class GeneralizationTable(tables.Table):
             verbose_name="Witness Length")
 
     def render_absblock(self, value):
-        # TODO storing the AbstractionContext here is somewhat ugly, but it is
-        # a lot faster than recreating it every time.
-        actx = getattr(self, '_actx', None)
-        res = load_abstract_block(value, actx)
-        if actx is None:
-            self._actx = res.actx
+        # We cannot use the hack of storing the actx here, since
+        # generalizations may have entirely different configs!
+        res = load_abstract_block(value, None)
         return prettify_absblock(res, skip_top=True)
 
     def render_interestingness(self, value):
