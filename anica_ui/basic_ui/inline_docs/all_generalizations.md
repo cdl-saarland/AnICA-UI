@@ -28,10 +28,6 @@ The linked page with details for the generalization contains the unabridged repr
 #### # Instructions
 The number of abstract instructions in the abstract block.
 
-#### Mean Interestingness
-The geometric mean of the interestingnesses of a group of blocks sampled from the represented concrete basic blocks of this abstract block.
-The higher this value, the more dramatic is the deviation between the tools under investigation (may be infinite if at least one of the tools crashes).
-
 #### Generality
 The minimum number of instruction schemes represented by an abstract instruction of the abstract block.
 The larger this is, the more basic blocks are characterized as interesting by this generalization result.

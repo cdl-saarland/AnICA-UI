@@ -32,8 +32,6 @@ If it is greater, fewer samples are used (up to 1.0, in which case all samples f
 
 This section contains metrics for the discovery:
 
-  - geomean interestingness: The geometric mean of the interestingnesses of a group of blocks sampled from the represented concrete basic blocks of this abstract block.
-    The higher this value, the more dramatic is the deviation between the tools under investigation (may be infinite if at least one of the tools crashes).
   - generality: The minimum number of instruction schemes represented by an abstract instruction of the abstract block.
     The larger this is, the more basic blocks are characterized as interesting by this discovery.
   - witness length: The length of the witness for the generalization of this discovery.

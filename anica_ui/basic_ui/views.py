@@ -661,7 +661,7 @@ def single_generalization_view(request, generalization_id):
 
     min_absblock_html = prettify_absblock(absblock.minimize(), add_schemes=True)
 
-    mean_interestingness = gen_obj.interestingness
+    # mean_interestingness = gen_obj.interestingness
     witness_length = gen_obj.witness_len
     generality = gen_obj.generality
 
@@ -670,7 +670,7 @@ def single_generalization_view(request, generalization_id):
         remark_text = "No remarks."
 
     stats = [
-            ('geomean interestingness', mean_interestingness),
+            # ('geomean interestingness', mean_interestingness),
             ('generality', generality),
             ('witness length', witness_length),
         ]
