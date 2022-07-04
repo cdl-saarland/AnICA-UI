@@ -4,7 +4,7 @@ This is the web user interface for AnICA ("Analyzing Inconsistencies in Microarc
 Its purpose is to visualize the results of AnICA's inconsistency discovery campaigns and generalizations for single discoveries.
 Configuring and running new campaigns or generalizations is (currently) not supported by this UI and needs to be done with AnICA's configuration files and command line interface directly (it can be found as a submodule in `lib/anica`, check the README there for more details).
 
-The UI is implemented as a webapp in [django](https://www.djangoproject.com/).
+The UI is implemented as a web app in [django](https://www.djangoproject.com/).
 At the current point, it is only intended and optimized for local use on the same machine, a machine in a restricted local network, or from inside a virtual machine.
 **Use on a public-facing web server is not recommended** since the implementation is rather backend-heavy and might enable denial of service attacks.
 
@@ -16,13 +16,13 @@ The UI has only been tested on Linux systems.
 ### Development Version
 
 Make sure that you have `llvm-mc` on your path (most likely by installing [LLVM](https://llvm.org/)).
-It is used by the iwho subcomponent (at `lib/anica/lib/iwho`) to handle basic instruction (dis)assembly tasks.
+It is used by the IWHO subcomponent (at `lib/anica/lib/iwho`) to handle basic instruction (dis)assembly tasks.
 Furthermore, you need a python3 setup with the `venv` standard module available.
 
 Run the `./setup_venv.sh` script to set up a virtual environment for the AnICA UI at `./env/anica_ui`.
 Whenever you run any of the AnICA UI commands below in a shell, you will need to have activated the virtual environment with `source ./env/anica_ui/bin/activate`.
 This virtual environment is a suitable replacement the one in the AnICA project.
-This means that you can use it to run all commands belonging to the AnICA and IWHo subprojects.
+This means that you can use it to run all commands belonging to the AnICA and IWHO subprojects.
 
 
 ## Usage
@@ -37,6 +37,7 @@ in a web browser (tested mainly with Chromium) at
 `http://127.0.0.1:8000/anica/`.
 
 All pages of the UI have a "Open Docs" button in the top-right corner that opens a side pane with information about the current page.
+
 
 ### Adding New Campaigns
 
@@ -63,6 +64,23 @@ Generalizations (as produced by `anica-generalize`) do not require preprocessing
 ```
 ./anica_ui/manage.py import_generalization path/to/generalization/dir
 ```
+
+### Adding a Basic Block Set and Computing Coverage Metrics
+
+TODO explain
+```
+./anica_ui/manage.py import_bbset --isa x86 path/to/generalization/dir
+```
+
+
+To compute the extent to which one or more imported campaigns explain the inconsistencies in one or more imported basic block sets, use the following command:
+```
+./anica_ui/manage.py compute_bbset_coverage [--campaigns 1 2 ...] [--bbsets 1 2 ...]
+```
+The numbers need to be the numerical identifiers of the imported entities in the UI, as seen in their respective overview tables in the UI.
+When arguments are omitted, all corresponding imported entities are used.
+Combinations of campaigns and basic block sets for which metrics have been computed before are skipped automatically.
+
 
 ### Flushing the UI
 
