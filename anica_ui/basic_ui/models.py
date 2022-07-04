@@ -199,13 +199,19 @@ def import_campaign(tag, campaign_dir):
     total_seconds = report['seconds_passed']
     host_pc = report['host_pc']
 
-    tool_objs = [Tool.objects.get_or_create(full_name=tool_name, defaults={})[0] for tool_name in tools]
-
     # The better way would probably be to move/copy the files into the django
     # app's working space and to make this path relative to a fixed base. This
     # here breaks if the imported campaign directories are deleted or moved
     # around.
     witness_path = str((base_dir / 'witnesses').resolve())
+
+    # avoid duplicate imports (this exploits the above implementation choice)
+    duplicate = Campaign.objects.filter(witness_path=witness_path)
+    if duplicate.exists():
+        print(f"skipping campaign {campaign_dir} because it has alreadyh been imported")
+        return
+
+    tool_objs = [Tool.objects.get_or_create(full_name=tool_name, defaults={})[0] for tool_name in tools]
 
     campaign = Campaign(
             tag = tag,
