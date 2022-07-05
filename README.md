@@ -10,6 +10,10 @@ At the current point, it is only intended and optimized for local use on the sam
 
 The UI has only been tested on Linux systems.
 
+## Maturity
+
+This is a research prototype, expect things to break!
+
 
 ## Installation
 
