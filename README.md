@@ -45,18 +45,12 @@ All pages of the UI have a "Open Docs" button in the top-right corner that opens
 
 ### Adding New Campaigns
 
-In a first step, post-process the AnICA results with the following command to add additional metrics for the UI:
-```
-./tools/add_metrics.py path/to/first/campaign/dir path/to/second/campaign/dir ...
-```
-The passed paths should be results of AnICA's discovery campaigns (as produced by `anica-discover`; among other things, there should be a `campaign_config.json`) directly in this directory.
-
-
 New AnICA campaigns can be added to the UI via a [management command](https://docs.djangoproject.com/en/3.2/howto/custom-management-commands/):
 ```
 ./anica_ui/manage.py import_campaigns <TAG> path/to/first/campaign/dir path/to/second/campaign/dir ...
 ```
 
+The passed paths should be results of AnICA's discovery campaigns (as produced by `anica-discover`; among other things, there should be a `campaign_config.json`) directly in this directory.
 The first `<TAG>` argument is an identifier that is in the UI to organize campaigns.
 Campaigns can be filtered and sorted according to their tag.
 
@@ -71,11 +65,14 @@ Generalizations (as produced by `anica-generalize`) do not require preprocessing
 
 ### Adding a Basic Block Set and Computing Coverage Metrics
 
-TODO explain
+To find out in how far the discoveries from AnICA campaigns cover inconsistencies in a given set of basic blocks, you need to first import the basic block set into the UI:
 ```
-./anica_ui/manage.py import_bbset --isa x86 path/to/generalization/dir
+./anica_ui/manage.py import_bbset --isa x86 "<identifier>" path/to/bbset.csv
 ```
-
+The given file should be a CSV file containing basic blocks and throughput estimates for them by different predictors.
+They should provide a `'bb'` column (which houses the hex-encoded byte representation of the basic block) as well as a column for each predictor key (which houses the predicted cycles required for the basic blocks, as a float (or -1.0 for a prediction error)).
+The identifier is used in the UI to refer to the basic block set.
+The `--isa` argument determines which instruction set architecture is assumed to decode the basic blocks from the csv file.
 
 To compute the extent to which one or more imported campaigns explain the inconsistencies in one or more imported basic block sets, use the following command:
 ```
