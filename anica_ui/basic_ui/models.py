@@ -385,7 +385,7 @@ def import_campaign(tag, campaign_dir):
 
     return campaign.id
 
-def compute_bbset_coverage(campaign_id_seq, bbset_id_seq):
+def compute_bbset_coverage(campaign_id_seq, bbset_id_seq, heuristic=False):
     """ Compute metrics on how many basic blocks from the specified BBSets are
     covered by the specified Campaigns.
     Both parameters should be sequences of numerical identifiers of
@@ -472,7 +472,7 @@ def compute_bbset_coverage(campaign_id_seq, bbset_id_seq):
 
             all_abs.sort(key=lambda x: len(x.abs_insns))
 
-            metrics = get_table_metrics(actx=actx, all_abs=all_abs, interesting_bbs=interesting_bbs, total_num_bbs=num_bbs)
+            metrics = get_table_metrics(actx=actx, all_abs=all_abs, interesting_bbs=interesting_bbs, total_num_bbs=num_bbs, heuristic=heuristic)
 
             obj = BasicBlockSetMetrics(bbset=bbset, campaign=campaign, **metrics)
             obj.save()
