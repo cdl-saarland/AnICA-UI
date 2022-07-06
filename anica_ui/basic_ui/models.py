@@ -21,6 +21,12 @@ from anica.bbset_coverage import get_table_metrics
 
 from .helpers import load_abstract_block
 
+import sys
+import os
+
+sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", "tools"))
+from add_metrics import add_metrics_for_campaign_dir
+
 class Tool(models.Model):
     full_name = models.CharField(max_length=255)
 
@@ -181,9 +187,14 @@ def import_basic_block_set(isa, identifier, csv_file):
                 ))
     BasicBlockMeasurement.objects.bulk_create(bbmeasurement_objs)
 
+    return bbset.id
+
 
 def import_campaign(tag, campaign_dir):
     base_dir = Path(campaign_dir)
+
+    if not (base_dir / 'metrics.json').exists():
+        add_metrics_for_campaign_dir(campaign_dir)
 
     campaign_config = load_json_config(base_dir / "campaign_config.json")
 
@@ -372,6 +383,7 @@ def import_campaign(tag, campaign_dir):
     Measurement.objects.bulk_create(measurement_objs)
     discovery2ischeme_cls.objects.bulk_create(through_objs)
 
+    return campaign.id
 
 def compute_bbset_coverage(campaign_id_seq, bbset_id_seq):
     """ Compute metrics on how many basic blocks from the specified BBSets are
@@ -416,6 +428,8 @@ def compute_bbset_coverage(campaign_id_seq, bbset_id_seq):
                 print("skipping (campaign {}, bbset {}) because necessary measurements are not present for {}".format(
                     campaign_id, bbset_id, [t.full_name for t in tools_without_measurements]))
                 continue
+
+            print(f"computing coverage metrics for (campaign {campaign_id}, bbset {bbset_id})")
 
             tool_names = [ t.full_name for t in tools ]
 

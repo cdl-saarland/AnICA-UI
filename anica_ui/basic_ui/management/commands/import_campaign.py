@@ -12,5 +12,5 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         tag = options['tag']
         for campaign_dir in options['campaign_dirs']:
-            import_campaign(tag, campaign_dir)
-            self.stdout.write(self.style.SUCCESS('Successfully imported campaign "{}"'.format(campaign_dir)))
+            campaign_id = import_campaign(tag, campaign_dir)
+            self.stdout.write(self.style.SUCCESS('Successfully imported campaign "{}" with id {}'.format(campaign_dir, campaign_id)))

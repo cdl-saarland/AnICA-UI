@@ -14,6 +14,6 @@ class Command(BaseCommand):
         isa = options['isa']
         identifier = options['identifier']
         csv_file = options['csv_file']
-        import_basic_block_set(isa, identifier, csv_file)
-        self.stdout.write(self.style.SUCCESS('Successfully imported basic block set "{}"'.format(csv_file)))
+        bbset_id = import_basic_block_set(isa, identifier, csv_file)
+        self.stdout.write(self.style.SUCCESS('Successfully imported basic block set "{}" with id {}'.format(csv_file, bbset_id)))
 
