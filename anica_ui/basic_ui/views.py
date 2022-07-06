@@ -899,7 +899,9 @@ class SingleBBSetTable(tables.Table):
             linkify=(lambda value: django.urls.reverse('basic_ui:single_campaign', kwargs={'campaign_id': value})),
             attrs={"td": campaign_table_attrs, "th": campaign_table_attrs},
             verbose_name="Campaign")
-    tag = tables.Column(attrs={"td": campaign_table_attrs, "th": campaign_table_attrs},
+    tag = tables.Column(
+            linkify=(lambda value, record: url_with_querystring(django.urls.reverse('basic_ui:single_bbset', kwargs={'bbset_id': record['bbset_id']}), tag=value)),
+            attrs={"td": campaign_table_attrs, "th": campaign_table_attrs},
             verbose_name="Campaign Tag")
     tools = tables.Column(attrs={"td": campaign_table_attrs, "th": campaign_table_attrs},
             verbose_name="Tools under Investigation")
@@ -909,6 +911,7 @@ class SingleBBSetTable(tables.Table):
             verbose_name="Run-Time")
 
     bbset_size = tables.Column(attrs={"td": campaign_table_attrs, "th": campaign_table_attrs}, visible=False)
+    bbset_id = tables.Column(attrs={"td": campaign_table_attrs, "th": campaign_table_attrs}, visible=False)
 
     num_interesting = tables.Column(attrs={"td": campaign_table_attrs, "th": campaign_table_attrs},
             verbose_name="# BBs interesting")
@@ -947,7 +950,12 @@ def single_bbset_view(request, bbset_id):
             (f'{bbset_obj.identifier}', django.urls.reverse('basic_ui:single_bbset', kwargs={'bbset_id': bbset_id})),
         ]
 
-    campaigns = Campaign.objects.all()
+    tag_filter = request.GET.get('tag', None)
+    if tag_filter is None:
+        campaigns = Campaign.objects.all()
+    else:
+        campaigns = Campaign.objects.filter(tag=tag_filter)
+        topbarpathlist.append((f"campaigns with tag '{tag_filter}'", url_with_querystring(django.urls.reverse('basic_ui:single_bbset', kwargs={'bbset_id': bbset_id}), tag=tag_filter)))
 
     data = []
     bbset_size = bbset_obj.basicblockentry_set.count()
@@ -972,6 +980,7 @@ def single_bbset_view(request, bbset_id):
                     'num_discoveries': num_discoveries,
                     'time_spent': cobj.total_seconds,
                     'bbset_size': bbset_size,
+                    'bbset_id': bbset_id,
                     'num_interesting': num_interesting,
                     'num_interesting_covered': num_interesting_covered,
                     'percent_interesting_covered': percent_interesting_covered,
@@ -982,7 +991,7 @@ def single_bbset_view(request, bbset_id):
             pass
 
     table = SingleBBSetTable(data)
-    tables.RequestConfig(request).configure(table)
+    tables.RequestConfig(request, paginate=False).configure(table)
 
     context = {
             "title": "Single Basic Block Set",

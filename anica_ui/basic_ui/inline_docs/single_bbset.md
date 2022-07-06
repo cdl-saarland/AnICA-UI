@@ -14,6 +14,7 @@ Click it to get to the discovery campaign.
 
 #### Campaign Tag
 The tag of the discovery campaign, as specified when importing it.
+Click a value to get to a view only showing campaigns with this tag.
 
 #### Tools under Investigation
 Discovery campaigns search for interesting deviations in the results of a number of throughput predictor tools (usually two).
