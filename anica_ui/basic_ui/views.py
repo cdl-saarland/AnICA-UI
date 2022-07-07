@@ -15,6 +15,7 @@ import django_tables2 as tables
 from markdown import markdown
 
 from anica.abstractioncontext import AbstractionContext
+from anica.bbset_coverage import make_heatmap
 from iwho.configurable import config_diff, pretty_print
 
 from .models import Campaign, Discovery, InsnScheme, Generalization, BasicBlockSet, BasicBlockSetMetrics, BasicBlockEntry
@@ -993,11 +994,24 @@ def single_bbset_view(request, bbset_id):
     table = SingleBBSetTable(data)
     tables.RequestConfig(request, paginate=False).configure(table)
 
+
+    tool_keys = [ str(t) for t in bbset_obj.has_data_for.all()]
+
+    plot_data = []
+    for entry in bbset_obj.basicblockentry_set.all():
+        d = {'bb': entry.hex_str, **entry.measurement_results}
+        plot_data.append(d)
+
+    threshold = 0.5
+
+    heatmap = encode_plot(make_heatmap(tool_keys, plot_data, threshold))
+
     context = {
             "title": "Single Basic Block Set",
             'bbset_name': bbset_obj.identifier,
             'bbset_id': bbset_id,
             'topbarpathlist': topbarpathlist,
+            'plot': heatmap,
             'table': table,
         }
 

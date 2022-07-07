@@ -1,6 +1,13 @@
 # Single Basic Block Set View
 
-This view shows the computed discovery campaign coverage metrics available for the selected basic block set.
+This view shows with a heatmap how many basic blocks in the selected basic block set cause inconsistencies for certain predictor pairs and the computed discovery campaign coverage metrics.
+
+## Interestingness Heatmap
+
+Each square shows the percentage of entries in the basic block set where a pair of throughput predictors disagree with a relative difference of more than 50%.
+
+
+## Campaign Coverage Results
 Each row corresponds to one discovery campaign that has been imported to the UI and whose metrics have been computed via command line.
 After importing a discovery campaign, you will need to use the `./manage.py compute_bbset_coverage --campaigns X [--bbsets Y]` command with the corresponding campaign ID (and basic block set) to compute these metrics and to see them here.
 

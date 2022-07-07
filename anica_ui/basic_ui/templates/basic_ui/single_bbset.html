@@ -5,7 +5,13 @@
 {% block title %}{{title}}{% endblock %}
 
 {% block content %}
-<h3>Discovery Coverage Results for Basic Block Set "{{ bbset_name }}": [<a href="{% url 'basic_ui:single_bbset_allbbs' bbset_id %}">view Basic Blocks</a>]</h3>
+<h3>Results for Basic Block Set "{{ bbset_name }}": [<a href="{% url 'basic_ui:single_bbset_allbbs' bbset_id %}">view Basic Blocks</a>]</h3>
 
+<h4>Interestingness Heatmap </h4>
+    <div class="imagecontainer">
+        <img src='data:image/png;base64,{{ plot }}'>
+    </div>
+
+<h4>Campaign Coverage Results</h4>
     {% render_table table %}
 {% endblock %}
