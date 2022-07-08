@@ -41,7 +41,7 @@ def add_metrics_for_campaign_dir(campaign_dir, overwrite=False):
 
     result_path = base_dir / 'metrics.json'
 
-    if result_path.exists() and not args.overwrite:
+    if result_path.exists() and not overwrite:
         print(f"Adding no metrics to campaign directory '{base_dir}' because a 'metrics.json' already exists. Run with '--overwrite' to overwrite.")
         return
 
