@@ -17,7 +17,7 @@ This narrowing may ease interpreting the abstract block for humans.
 
 ### Example Results
 Here, a small number of basic blocks that were sampled from the discovery with the corresponding predictions are shown.
-They are selected somewhat evenly wrt. interestingness from all sampled basic blocks.
+They are selected somewhat evenly with respect to interestingness from all sampled basic blocks.
 
 For more results, view the corresponding witness page and click on the relevant abstract block of interest to open its measurement site in a side view.
 

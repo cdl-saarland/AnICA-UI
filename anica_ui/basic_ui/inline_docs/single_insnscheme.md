@@ -23,10 +23,6 @@ The linked page with details for the discovery contains the unabridged represent
 #### # Instructions
 The number of abstract instructions in the abstract block.
 
-#### Sample Coverage
-The (approximated) ratio of samples from the universe of basic blocks (with the same number of instructions as this abstract block) that are represented by this discovery.
-The higher this ratio, the more general is this abstract block.
-
 #### Mean Interestingness
 The geometric mean of the interestingnesses of a group of blocks sampled from the represented concrete basic blocks of this abstract block.
 The higher this value, the more dramatic is the deviation between the tools under investigation (may be infinite if at least one of the tools crashes).

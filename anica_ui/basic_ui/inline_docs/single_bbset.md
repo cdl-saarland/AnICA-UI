@@ -1,6 +1,6 @@
 # Single Basic Block Set View
 
-This view shows with a heatmap how many basic blocks in the selected basic block set cause inconsistencies for certain predictor pairs and the computed discovery campaign coverage metrics.
+This view shows how many basic blocks in the selected basic block set cause inconsistencies for certain predictor pairs and the computed discovery campaign coverage metrics.
 
 ## Interestingness Heatmap
 

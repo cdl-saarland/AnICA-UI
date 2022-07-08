@@ -3,7 +3,7 @@
 This view shows the details of a single discovery campaign:
 
 ### Tools under Investigation
-Discovery campaigns search for interesting deviations in the results of a number of throughput predictor tools (usually two).
+Discovery campaigns search for interesting inconsistencies in the results of a number of throughput predictor tools (usually two).
 The tools listed here were investigated for this campaign.
 
 ### Termination Condition
@@ -18,7 +18,7 @@ The first time one of the conditions is satisfied after processing a batch, the 
 
 ### Abstraction Config
 
-This is the detailed configuration used in the campaign for abstracting instructions, restricting instruction forms, judging the interestingness of basic blocks and general parameters of the discovery algorithm.
+This is the detailed configuration used in the campaign for abstracting instructions, restricting instruction schemes, judging the interestingness of basic blocks and general parameters of the discovery algorithm.
 Hover over the individual entries to see a short documentation of their meaning.
 
 ### Prefix Control
@@ -34,7 +34,7 @@ This section shows a number of metrics for the discovery campaign:
     This is the number of batches that were investigated during the campaign.
   - discoveries made: The number of discoveries, i.e. non-subsuming interesting abstract basic blocks, made during the discovery campaign.
   - discoveries per batch: The average (arithmetic mean) number of discoveries per batch.
-  - average generality: The average over the minimal numbers of instruction schemes represented by any abstract instruction of the abstract blocks (i.e. avg({min({len(absinsn.representedSchemes) for absinsn in discovery}) for discovery in Campaign})).
+  - average generality: The average over the minimal numbers of instruction schemes represented by any abstract instruction of the abstract blocks (i.e. `avg({min({len(absinsn.representedSchemes) for absinsn in discovery}) for discovery in Campaign})`).
   - average witness length: The average length of witnesses over all discoveries of the campaign.
   - average number of instructions: The average number of abstract instructions over all discoveries of the campaign.
   - time spent: The time that passed while performing the campaign.
@@ -48,7 +48,7 @@ For a more detailed overview, this section displays plots concerning the entire 
   - Generality of Discoveries: This is a histrogram showing the distribution of generality values in the discoveries of this campaign.
 
 By default, the axis scales of plots for different campaigns may differ, which makes a comparison difficult.
-To do comparisons between campaigns, there are controls between the plots that allow to specify a campaign with which the current campaign view should be made comparable with.
+To do comparisons between campaigns, there are controls below the plots that allow to specify a campaign with which the current campaign view should be made comparable with.
 
 If a comparison campaign Y is set on the single campaign view for a campaign X and on a single campaign view for campaign Y, campaign X is set for comparison, the scales of the plots will be the same on both views.
 If a batch prefix is specified, it should be specified in both views explicitly so that the scales are adjusted accordingly.

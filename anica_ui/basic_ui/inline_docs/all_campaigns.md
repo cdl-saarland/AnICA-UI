@@ -1,13 +1,13 @@
 # All Campaigns View
 
 This view gives an overview over all discovery campaigns currently registered.
-Select one for closer investigation by clicking on its ID in the "Campaign ID" column.
+Select one for closer investigation by clicking on its ID in the "ID" column.
 
 ### Table Columns
 Sorting the table by the value of a specific column is possible for most columns.
 Click the column title to do so, and click it again to reverse the order.
 
-#### Campaign ID
+#### ID
 This is the unique identifier for the discovery campaign, determined by the order in which the discovery campaigns were imported.
 They link to a view with more details and results for the discovery campaign.
 
@@ -19,7 +19,7 @@ Click a value to get to a view only showing campaigns with this tag.
 The date when the discovery campaign was started.
 
 #### Tools under Investigation
-Discovery campaigns search for interesting deviations in the results of a number of throughput predictor tools (usually two).
+Discovery campaigns search for interesting inconsistencies in the results of a number of throughput predictor tools (usually two).
 This column lists which tools where used for this discovery campaign.
 
 #### Config Delta
