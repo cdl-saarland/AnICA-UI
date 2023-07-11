@@ -35,6 +35,10 @@ Make sure that you have `llvm-mc` on your path (most likely by installing [LLVM]
 It is used by the IWHO subcomponent (at `lib/anica/lib/iwho`) to handle basic instruction (dis)assembly tasks.
 Furthermore, you need a python3 setup with the `venv` standard module available.
 
+First, ensure that this repo and its submodules are all cloned:
+```
+git submodule update --init --recursive
+```
 Run the `./setup_venv.sh` script to set up a virtual environment for the AnICA UI at `./env/anica_ui`.
 Whenever you run any of the AnICA UI commands below in a shell, you will need to have activated the virtual environment with `source ./env/anica_ui/bin/activate`.
 This virtual environment is a suitable replacement the one in the AnICA project.
